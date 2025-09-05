@@ -50,11 +50,11 @@
 
 ## Phase 3.1: Setup (環境建置)
 
-- [ ] T001 建立 Laravel 專案結構並初始化 example-app
-- [ ] T002 配置 Laravel Sail 環境 (MySQL, Redis, MailHog)
-- [ ] T003 [P] 安裝並配置 Laravel Sanctum for API 認證
-- [ ] T004 [P] 配置 .env 環境變數 (DB, Mail, Cache, Queue)
-- [ ] T005 [P] 設定 CORS 和 API 路由結構
+- [x] ✅ **T001 建立 Laravel 專案結構並初始化 example-app** (COMPLETED)
+- [x] ✅ **T002 配置 Laravel Sail 環境 (MySQL, Redis, MailHog)** (COMPLETED)
+- [x] ✅ **T003 [P] 安裝並配置 Laravel Sanctum for API 認證** (COMPLETED)
+- [x] ✅ **T004 [P] 配置 .env 環境變數 (DB, Mail, Cache, Queue)** (COMPLETED)
+- [x] ✅ **T005 [P] 設定 CORS 和 API 路由結構** (COMPLETED)
 
 ## Phase 3.2: Tests First (TDD) ⚠️ 必須在實作前完成
 
@@ -62,19 +62,19 @@
 
 ### Contract Tests (API 端點結構測試)
 
-- [ ] T006 [P] 合約測試 POST /api/v1/auth/register in `tests/Feature/Auth/RegisterContractTest.php`
-- [ ] T007 [P] 合約測試 POST /api/v1/auth/login in `tests/Feature/Auth/LoginContractTest.php`
-- [ ] T008 [P] 合約測試 POST /api/v1/auth/logout in `tests/Feature/Auth/LogoutContractTest.php`
-- [ ] T009 [P] 合約測試 POST /api/v1/auth/forgot-password in `tests/Feature/Auth/ForgotPasswordContractTest.php`
-- [ ] T010 [P] 合約測試 POST /api/v1/auth/reset-password in `tests/Feature/Auth/ResetPasswordContractTest.php`
-- [ ] T011 [P] 合約測試 POST /api/v1/auth/verify-email in `tests/Feature/Auth/VerifyEmailContractTest.php`
-- [ ] T012 [P] 合約測試 GET /api/v1/users/profile in `tests/Feature/User/ProfileContractTest.php`
-- [ ] T013 [P] 合約測試 PUT /api/v1/users/profile in `tests/Feature/User/UpdateProfileContractTest.php`
-- [ ] T014 [P] 合約測試 PUT /api/v1/users/change-password in `tests/Feature/User/ChangePasswordContractTest.php`
-- [ ] T015 [P] 合約測試 GET /api/v1/admin/users in `tests/Feature/Admin/UserListContractTest.php`
-- [ ] T016 [P] 合約測試 GET /api/v1/admin/users/{id} in `tests/Feature/Admin/UserDetailContractTest.php`
-- [ ] T017 [P] 合約測試 PUT /api/v1/admin/users/{id} in `tests/Feature/Admin/UpdateUserContractTest.php`
-- [ ] T018 [P] 合約測試 POST /api/v1/admin/users/{id}/reset-password in `tests/Feature/Admin/ResetUserPasswordContractTest.php`
+- [x] ✅ **T006 [P] 合約測試 POST /api/v1/auth/register** (COMPLETED - RED ⚠️)
+- [x] ✅ **T007 [P] 合約測試 POST /api/v1/auth/login** (COMPLETED - RED ⚠️)
+- [x] ✅ **T008 [P] 合約測試 POST /api/v1/auth/logout** (COMPLETED - RED ⚠️)
+- [x] ✅ **T009 [P] 合約測試 POST /api/v1/auth/forgot-password** (COMPLETED - RED ⚠️)
+- [x] ✅ **T010 [P] 合約測試 POST /api/v1/auth/reset-password** (COMPLETED - RED ⚠️)
+- [x] ✅ **T011 [P] 合約測試 POST /api/v1/auth/verify-email** (COMPLETED - RED ⚠️)
+- [x] ✅ **T012 [P] 合約測試 GET /api/v1/users/profile** (COMPLETED - RED ⚠️)
+- [x] ✅ **T013 [P] 合約測試 PUT /api/v1/users/profile** (COMPLETED - RED ⚠️)
+- [x] ✅ **T014 [P] 合約測試 PUT /api/v1/users/change-password** (COMPLETED - RED ⚠️)
+- [x] ✅ **T015 [P] 合約測試 GET /api/v1/admin/users** (COMPLETED - RED ⚠️)
+- [x] ✅ **T016 [P] 合約測試 GET /api/v1/admin/users/{id}** (COMPLETED - RED ⚠️)
+- [x] ✅ **T017 [P] 合約測試 PUT /api/v1/admin/users/{id}** (COMPLETED - RED ⚠️)
+- [x] ✅ **T018 [P] 合約測試 POST /api/v1/admin/users/{id}/reset-password** (COMPLETED - RED ⚠️)
 
 ### Integration Tests (完整功能流程測試)
 
