@@ -1,0 +1,586 @@
+openapi: 3.0.3
+info:
+  title: Laravel12 Example-App API
+  description: 前後端分離的使用者管理 API 系統
+  version: 1.0.0
+  contact:
+    name: Development Team
+    email: dev@example.com
+
+servers:
+  - url: http://localhost/api/v1
+    description: 開發環境
+  - url: https://api.example.com/v1
+    description: 生產環境
+
+security:
+  - BearerAuth: []
+
+paths:
+  # 認證相關端點
+  /auth/register:
+    post:
+      summary: 使用者註冊
+      description: 建立新的使用者帳戶並發送驗證信箱
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistrationRequest"
+      responses:
+        "201":
+          description: 註冊成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRegistrationResponse"
+        "422":
+          description: 驗證錯誤
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+
+  /auth/login:
+    post:
+      summary: 使用者登入
+      description: 使用帳號密碼登入系統
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: 登入成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: 認證失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      summary: 使用者登出
+      description: 登出並撤銷當前 Token
+      tags: [Authentication]
+      responses:
+        "200":
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/forgot-password:
+    post:
+      summary: 忘記密碼
+      description: 發送密碼重設連結到使用者信箱
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "200":
+          description: 重設連結已發送
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/reset-password:
+    post:
+      summary: 重設密碼
+      description: 使用重設 Token 更新密碼
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "200":
+          description: 密碼重設成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/verify-email:
+    post:
+      summary: 驗證信箱
+      description: 使用驗證 Token 確認信箱
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+      responses:
+        "200":
+          description: 信箱驗證成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # 使用者資料管理
+  /users/profile:
+    get:
+      summary: 取得個人資料
+      description: 取得當前登入使用者的個人資料
+      tags: [User Profile]
+      responses:
+        "200":
+          description: 個人資料
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+
+    put:
+      summary: 更新個人資料
+      description: 更新當前登入使用者的個人資料
+      tags: [User Profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+
+  /users/change-password:
+    put:
+      summary: 修改密碼
+      description: 修改當前登入使用者的密碼
+      tags: [User Profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200":
+          description: 密碼修改成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # 管理員功能
+  /admin/users:
+    get:
+      summary: 取得使用者清單
+      description: 管理員取得所有使用者清單 (分頁)
+      tags: [Admin - User Management]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 使用者清單
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+
+  /admin/users/{userId}:
+    get:
+      summary: 取得特定使用者資料
+      description: 管理員取得特定使用者的詳細資料
+      tags: [Admin - User Management]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 使用者資料
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetailResponse"
+
+    put:
+      summary: 更新使用者資料
+      description: 管理員更新特定使用者的資料
+      tags: [Admin - User Management]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUpdateUserRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetailResponse"
+
+    delete:
+      summary: 刪除使用者
+      description: 管理員刪除特定使用者
+      tags: [Admin - User Management]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 刪除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/users/{userId}/reset-password:
+    post:
+      summary: 重設使用者密碼
+      description: 管理員重設特定使用者的密碼
+      tags: [Admin - User Management]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminResetPasswordRequest"
+      responses:
+        "200":
+          description: 密碼重設成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # 請求結構
+    UserRegistrationRequest:
+      type: object
+      required: [username, email, password, password_confirmation]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: "^[a-zA-Z0-9_]+$"
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        password_confirmation:
+          type: string
+        name:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 20
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required: [email, token, password, password_confirmation]
+      properties:
+        email:
+          type: string
+          format: email
+        token:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        password_confirmation:
+          type: string
+
+    VerifyEmailRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 20
+        email:
+          type: string
+          format: email
+
+    ChangePasswordRequest:
+      type: object
+      required: [current_password, password, password_confirmation]
+      properties:
+        current_password:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        password_confirmation:
+          type: string
+
+    AdminUpdateUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 20
+
+    AdminResetPasswordRequest:
+      type: object
+      required: [password, password_confirmation]
+      properties:
+        password:
+          type: string
+          minLength: 8
+        password_confirmation:
+          type: string
+
+    # 回應結構
+    UserRegistrationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+            token:
+              type: string
+            expires_at:
+              type: string
+              format: date-time
+
+    UserProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/User"
+
+    UserListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            users:
+              type: array
+              items:
+                $ref: "#/components/schemas/User"
+            pagination:
+              $ref: "#/components/schemas/Pagination"
+
+    UserDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/UserDetail"
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error_code:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    # 資料模型
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserDetail:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            last_login_at:
+              type: string
+              format: date-time
+              nullable: true
+            login_count:
+              type: integer
+
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        last_page:
+          type: integer
+        from:
+          type: integer
+        to:
+          type: integer
