@@ -88,7 +88,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        if (!Auth::attempt(['username' => $request->username, 'password' => $request->password])) {
+        if (!Auth::guard('web')->attempt(['username' => $request->username, 'password' => $request->password])) {
             return response()->json([
                 'status' => 'error',
                 'message' => '使用者名稱或密碼錯誤',
@@ -136,7 +136,12 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()->currentAccessToken();
+
+        // 檢查是否為真實的 token（不是測試中的 TransientToken）
+        if ($token && method_exists($token, 'delete')) {
+            $token->delete();
+        }
 
         return response()->json([
             'status' => 'success',

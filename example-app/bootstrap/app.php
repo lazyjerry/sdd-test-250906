@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
+        // 添加安全標頭中間件到 API 路由
+        $middleware->api(append: [
+            App\Http\Middleware\SecurityHeaders::class,
+        ]);
+
         $middleware->alias([
             'auth' => Illuminate\Auth\Middleware\Authenticate::class,
         ]);
