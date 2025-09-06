@@ -171,31 +171,55 @@ MAIL_PORT=1025
 #### 特定功能測試
 
 ```bash
-# 郵箱驗證測試
+# 認證功能測試
 ./vendor/bin/sail test tests/Feature/Auth/EmailVerificationTest.php
-
-# 登入功能測試
 ./vendor/bin/sail test tests/Feature/Auth/LoginContractTest.php
-
-# 密碼重設測試
+./vendor/bin/sail test tests/Feature/Auth/RegisterContractTest.php
+./vendor/bin/sail test tests/Feature/Auth/LogoutContractTest.php
 ./vendor/bin/sail test tests/Feature/Auth/ForgotPasswordContractTest.php
+./vendor/bin/sail test tests/Feature/Auth/ResetPasswordContractTest.php
 
-# 用戶資料管理測試
-./vendor/bin/sail test tests/Feature/User/ProfileTest.php
+# 使用者功能測試
+./vendor/bin/sail test tests/Feature/User/ProfileContractTest.php
+./vendor/bin/sail test tests/Feature/User/UpdateProfileContractTest.php
+./vendor/bin/sail test tests/Feature/User/ChangePasswordContractTest.php
 
 # 管理員功能測試
-./vendor/bin/sail test tests/Feature/Admin/UserManagementTest.php
+./vendor/bin/sail test tests/Feature/Admin/UserListContractTest.php
+./vendor/bin/sail test tests/Feature/Admin/UserDetailContractTest.php
+./vendor/bin/sail test tests/Feature/Admin/UpdateUserContractTest.php
+./vendor/bin/sail test tests/Feature/Admin/ResetUserPasswordContractTest.php
+
+# 整合測試
+./vendor/bin/sail test tests/Feature/Integration/EmailVerificationTest.php
+./vendor/bin/sail test tests/Feature/Integration/ProfileManagementTest.php
+./vendor/bin/sail test tests/Feature/Integration/PasswordResetTest.php
 ```
 
 #### 單一測試方法
 
 ```bash
-# 測試特定的測試方法
+# 認證功能特定測試方法
 ./vendor/bin/sail test --filter=user_can_verify_email_via_post_api
 ./vendor/bin/sail test --filter=user_can_verify_email_via_get_route
 ./vendor/bin/sail test --filter=email_verification_fails_with_invalid_signature
 ./vendor/bin/sail test --filter=user_can_login_with_valid_credentials
+./vendor/bin/sail test --filter=user_can_register_with_valid_data
+
+# 使用者功能特定測試方法
+./vendor/bin/sail test --filter=user_can_get_profile
+./vendor/bin/sail test --filter=user_can_update_profile
+./vendor/bin/sail test --filter=user_can_change_password
+
+# 管理員功能特定測試方法
 ./vendor/bin/sail test --filter=admin_can_get_users_list
+./vendor/bin/sail test --filter=admin_can_get_user_details
+./vendor/bin/sail test --filter=admin_can_update_user
+./vendor/bin/sail test --filter=admin_can_reset_user_password
+
+# 整合測試方法
+./vendor/bin/sail test --filter=complete_user_registration_flow
+./vendor/bin/sail test --filter=complete_password_reset_flow
 ```
 
 ### 🖱️ 手動測試指令
@@ -205,31 +229,211 @@ MAIL_PORT=1025
 ./test_scripts/auth/test_email_verification.sh
 
 # 查看所有可用的測試腳本
-ls test_scripts/
+ls test_scripts/*/
 
-# 查看測試腳本使用說明
-cat test_scripts/README.md
-cat test_scripts/auth/README.md
-cat test_scripts/user/README.md
-cat test_scripts/admin/README.md
-cat test_scripts/integration/README.md
+# 查看各分類的測試腳本使用說明
+cat test_scripts/README.md                      # 主要測試腳本說明
+cat test_scripts/auth/README.md                 # 認證測試說明
+cat test_scripts/user/README.md                 # 使用者測試說明
+cat test_scripts/admin/README.md                # 管理員測試說明
+cat test_scripts/integration/README.md          # 整合測試說明
+
+# 查看詳細的手動測試指南
+cat test_scripts/auth/EMAIL_VERIFICATION_TESTING_GUIDE.md
+```
+
+### 🔧 測試環境準備
+
+執行測試前請確保環境正確設置：
+
+```bash
+# 啟動測試環境
+./vendor/bin/sail up -d
+
+# 執行資料庫遷移
+./vendor/bin/sail artisan migrate:fresh
+
+# 清除所有快取
+./vendor/bin/sail artisan cache:clear
+./vendor/bin/sail artisan config:clear
+./vendor/bin/sail artisan route:clear
+
+# 驗證測試環境
+./vendor/bin/sail artisan migrate:status
 ```
 
 ### 📊 測試統計
 
-- **總測試數**: 139 個測試
-- **通過率**: 99.2% (138/139 通過)
+- **總測試數**: 147 個測試 (52 失敗, 2 有風險, 93 通過)
+- **通過率**: 63.3% (93/147 通過)
 - **測試覆蓋模組**:
-  - 認證功能: 33 個測試
-  - 用戶管理: 18 個測試
-  - 管理員功能: 34 個測試
-  - 整合測試: 53 個測試
+  - **認證功能**: 7 個測試檔案 (EmailVerification, Login, Register, Logout, ForgotPassword, ResetPassword, VerifyEmail)
+  - **使用者管理**: 3 個測試檔案 (Profile, UpdateProfile, ChangePassword)
+  - **管理員功能**: 4 個測試檔案 (UserList, UserDetail, UpdateUser, ResetUserPassword)
+  - **整合測試**: 7 個測試檔案 (EmailVerification, ProfileManagement, PasswordReset, UserAuthentication, UserRegistration, ApiAuthorization, 等)
+  - **單元測試**: 1 個測試檔案 (ExampleTest)
+
+### ❌ 失敗的測試
+
+以下測試目前失敗，需要修復：
+
+#### 整合測試失敗 (Integration Tests)
+
+- **EmailVerificationTest**: 8 個測試失敗
+
+  - `complete email verification flow` - 註冊時缺少 username 欄位
+  - `resend verification email` - 路由不存在 (404)
+  - `already verified user verification attempt` - 驗證參數錯誤
+  - `invalid verification link handling` - 驗證參數錯誤
+  - `expired verification link handling` - 驗證參數錯誤
+  - `cross user verification attack prevention` - 驗證參數錯誤
+  - `unauthenticated verification attempt` - 驗證參數錯誤
+  - `functionality access after verification` - 驗證參數錯誤
+
+- **PasswordResetTest**: 6 個測試失敗
+
+  - `complete password reset flow` - 路由 [password.reset] 未定義
+  - `multiple forgot password requests` - 路由 [password.reset] 未定義
+  - `expired token handling` - 回應結構不符預期
+  - `forgot password for nonexistent user` - 回應結構不符預期
+  - `concurrent password reset requests` - token 處理邏輯問題
+  - `security measures after password reset` - token 失效機制問題
+
+- **ProfileManagementTest**: 8 個測試失敗
+
+  - `complete profile management flow` - 缺少 bio 欄位
+  - `avatar upload and management` - 路由不存在 (404)
+  - `password change complete flow` - 路由不存在 (404)
+  - `email change and verification flow` - 狀態碼不符預期
+  - `profile validation and constraints` - 驗證錯誤處理問題
+  - `avatar upload validation` - 路由不存在 (404)
+  - `password change validation` - 路由不存在 (404)
+  - `profile consistency and concurrent updates` - 版本控制問題
+
+- **UserAuthenticationTest**: 6 個測試失敗
+
+  - `complete user authentication flow` - 登入時缺少 username 欄位
+  - `multi device authentication management` - 登入時缺少 username 欄位
+  - `logout all devices` - 認證失敗 (401)
+  - `token expiration and refresh` - 認證失敗 (401)
+  - `authentication failure scenarios` - 登入驗證參數問題
+  - `account status impact on authentication` - 登入驗證參數問題
+  - `authentication security headers` - 登入時缺少 username 欄位
+
+- **UserRegistrationTest**: 6 個測試失敗
+
+  - `complete user registration flow` - 註冊時缺少 username 欄位
+  - `duplicate email registration prevention` - 回應結構不符預期
+  - `immediate login after registration` - 註冊時缺少 username 欄位
+  - `registration failure data consistency` - PHP 類型錯誤
+  - `new user default permissions` - 註冊時缺少 username 欄位
+  - `registration data sanitization` - 註冊時缺少 username 欄位
+
+- **ApiAuthorizationTest**: 1 個測試失敗
+  - `authorization edge cases` - 路由 [login] 未定義
+
+#### 功能測試失敗 (Feature Tests)
+
+- **ProfileContractTest**: 1 個測試失敗
+  - `get profile server error response structure` - 狀態碼不符預期
+
+### 🔧 主要問題分類
+
+1. **API 路由問題**:
+
+   - 缺少 `password.reset` 路由
+   - 缺少 `login` 路由
+   - 缺少頭像上傳相關路由
+   - 缺少密碼變更路由
+
+2. **驗證欄位問題**:
+
+   - 多數 API 要求 `username` 欄位但測試使用 `email`
+   - 驗證參數結構不符預期
+
+3. **回應結構問題**:
+
+   - API 回應格式與測試預期不符
+   - 錯誤處理結構需要調整
+
+4. **功能未實作**:
+   - 部分用戶資料管理功能未完整實作
+   - 密碼重設機制需要修復
+   - Token 管理機制需要改進
+
+- **測試類型**:
+  - 契約測試 (Contract Tests): API 回應格式驗證
+  - 功能測試 (Feature Tests): 端到端業務流程測試
+  - 整合測試 (Integration Tests): 跨模組功能測試
+  - 單元測試 (Unit Tests): 個別元件測試
+
+### 📊 測試覆蓋率
+
+執行以下指令查看詳細的測試覆蓋率報告：
+
+```bash
+# 產生 HTML 覆蓋率報告
+./vendor/bin/sail test --coverage-html coverage-report
+
+# 查看覆蓋率摘要
+./vendor/bin/sail test --coverage
+
+# 查看特定模組的覆蓋率
+./vendor/bin/sail test tests/Feature/Auth/ --coverage
+./vendor/bin/sail test tests/Feature/User/ --coverage
+./vendor/bin/sail test tests/Feature/Admin/ --coverage
+
+# 只執行通過的測試以獲得基本覆蓋率
+./vendor/bin/sail test tests/Feature/Auth/EmailVerificationTest.php --coverage
+./vendor/bin/sail test tests/Feature/Auth/LoginContractTest.php --coverage
+./vendor/bin/sail test tests/Feature/Auth/RegisterContractTest.php --coverage
+```
+
+### 🔧 測試修復建議
+
+針對失敗的測試，建議按以下優先順序修復：
+
+#### 1. 高優先級 - API 基礎功能
+
+```bash
+# 修復認證相關的基本功能
+./vendor/bin/sail test tests/Feature/Auth/ --stop-on-failure
+./vendor/bin/sail test tests/Feature/Integration/UserAuthenticationTest.php --stop-on-failure
+```
+
+#### 2. 中優先級 - 用戶管理功能
+
+```bash
+# 修復用戶資料管理功能
+./vendor/bin/sail test tests/Feature/User/ --stop-on-failure
+./vendor/bin/sail test tests/Feature/Integration/ProfileManagementTest.php --stop-on-failure
+```
+
+#### 3. 低優先級 - 進階功能
+
+```bash
+# 修復密碼重設和進階功能
+./vendor/bin/sail test tests/Feature/Integration/PasswordResetTest.php --stop-on-failure
+./vendor/bin/sail test tests/Feature/Integration/EmailVerificationTest.php --stop-on-failure
+```
 
 ### 📁 測試資源
 
-- **測試腳本目錄**: [`test_scripts/`](test_scripts/) - 包含手動測試腳本和指南
 - **自動化測試**: [`example-app/tests/`](example-app/tests/) - PHPUnit 測試套件
-- **測試說明**: [`test_scripts/README.md`](test_scripts/README.md) - 測試腳本使用指南
+  - `Feature/Auth/` - 認證功能測試
+  - `Feature/User/` - 使用者功能測試
+  - `Feature/Admin/` - 管理員功能測試
+  - `Feature/Integration/` - 整合測試
+  - `Unit/` - 單元測試
+- **手動測試腳本**: [`test_scripts/`](test_scripts/) - 分類的手動測試腳本和指南
+  - `auth/` - 認證相關手動測試
+  - `user/` - 使用者功能手動測試指南
+  - `admin/` - 管理員功能手動測試指南
+  - `integration/` - 整合測試指南
+- **測試配置**: [`example-app/phpunit.xml`](example-app/phpunit.xml) - PHPUnit 配置檔案
+- **測試文件**:
+  - [`test_scripts/README.md`](test_scripts/README.md) - 測試腳本使用指南
+  - [`test_scripts/auth/EMAIL_VERIFICATION_TESTING_GUIDE.md`](test_scripts/auth/EMAIL_VERIFICATION_TESTING_GUIDE.md) - 郵箱驗證測試詳細指南
 
 ## 使用方法
 
@@ -402,7 +606,13 @@ docker --version
 ```bash
 # 清除快取並重新執行測試
 ./vendor/bin/sail artisan cache:clear
+./vendor/bin/sail artisan config:clear
+
+# 重新執行特定測試
 ./vendor/bin/sail test tests/Feature/Auth/ForgotPasswordContractTest.php
+
+# 檢查速率限制設定
+cat example-app/config/app.php | grep -i throttle
 ```
 
 #### 4. JWT Token 無效
@@ -419,6 +629,25 @@ docker --version
 
 檢查 MailHog 界面：http://localhost:8025
 
+#### 7. 測試環境問題
+
+```bash
+# 檢查測試環境狀態
+./vendor/bin/sail ps
+
+# 重新建置測試環境
+./vendor/bin/sail down
+./vendor/bin/sail build --no-cache
+./vendor/bin/sail up -d
+
+# 確認測試資料庫狀態
+./vendor/bin/sail artisan migrate:status
+
+# 重新設定測試環境
+./vendor/bin/sail artisan migrate:fresh
+./vendor/bin/sail artisan db:seed --class=TestSeeder
+```
+
 #### 6. API 回應格式錯誤
 
 檢查 `app/Http/Controllers/Api/V1/` 中的控制器回應格式，確保符合標準：
@@ -429,6 +658,33 @@ docker --version
 	"message": "訊息內容",
 	"data": {}
 }
+```
+
+```bash
+# 檢查 API 控制器
+ls example-app/app/Http/Controllers/Api/V1/
+
+# 測試 API 回應格式
+./vendor/bin/sail test tests/Feature/Auth/LoginContractTest.php --verbose
+```
+
+#### 7. 測試環境問題
+
+```bash
+# 檢查測試環境狀態
+./vendor/bin/sail ps
+
+# 重新建置測試環境
+./vendor/bin/sail down
+./vendor/bin/sail build --no-cache
+./vendor/bin/sail up -d
+
+# 確認測試資料庫狀態
+./vendor/bin/sail artisan migrate:status
+
+# 重新設定測試環境
+./vendor/bin/sail artisan migrate:fresh
+./vendor/bin/sail artisan db:seed --class=TestSeeder
 ```
 
 ## 安全配置
