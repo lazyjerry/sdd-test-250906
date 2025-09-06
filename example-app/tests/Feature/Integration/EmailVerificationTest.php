@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -40,12 +41,14 @@ final class EmailVerificationTest extends TestCase
      */
     public function testCompleteEmailVerificationFlow(): void
     {
-        Event::fake();
         Mail::fake();
+        Notification::fake();
+        Event::fake(Verified::class);
 
         // 第一步：註冊新用戶
         $registrationData = [
             'name' => 'Verification Test User',
+            'username' => 'verify_user',
             'email' => 'verify@example.com',
             'password' => 'VerifyPassword123!',
             'password_confirmation' => 'VerifyPassword123!',
@@ -59,10 +62,8 @@ final class EmailVerificationTest extends TestCase
         $this->assertNotNull($user);
         $this->assertNull($user->email_verified_at); // 初始未驗證
 
-        // 第二步：驗證註冊時已發送驗證郵件
-        Mail::assertSent(\Illuminate\Auth\Notifications\VerifyEmail::class, function ($mail) use ($user) {
-            return $mail->user->id === $user->id;
-        });
+        // 第二步：驗證註冊時已發送驗證通知
+        Notification::assertSentTo($user, \Illuminate\Auth\Notifications\VerifyEmail::class);
 
         // 第三步：生成驗證 URL
         $verificationUrl = URL::temporarySignedRoute(
@@ -78,22 +79,20 @@ final class EmailVerificationTest extends TestCase
         $token = $registerResponse->json('data.token');
         Sanctum::actingAs($user);
 
-        $verifyResponse = $this->postJson('/api/v1/auth/verify-email', [
-            'verification_url' => $verificationUrl
-        ]);
+        $verificationParams = $this->extractVerificationParams($verificationUrl);
+        $verifyResponse = $this->postJson('/api/v1/auth/verify-email', $verificationParams);
 
         $verifyResponse->assertStatus(200);
+
         $verifyResponse->assertJsonStructure([
             'status',
             'message',
             'data' => [
                 'user' => [
                     'id',
-                    'name',
+                    'username',
                     'email',
                     'email_verified_at',
-                    'created_at',
-                    'updated_at'
                 ]
             ]
         ]);
@@ -177,9 +176,8 @@ final class EmailVerificationTest extends TestCase
             ]
         );
 
-        $verifyResponse = $this->postJson('/api/v1/auth/verify-email', [
-            'verification_url' => $verificationUrl
-        ]);
+        $verificationParams = $this->extractVerificationParams($verificationUrl);
+        $verifyResponse = $this->postJson('/api/v1/auth/verify-email', $verificationParams);
 
         // 應該回傳成功但註明已驗證
         $verifyResponse->assertStatus(200);
@@ -211,14 +209,18 @@ final class EmailVerificationTest extends TestCase
         Sanctum::actingAs($user);
 
         // 測試案例 1：無效簽名
-        $invalidSignatureUrl = URL::route('verification.verify', [
-            'id' => $user->getKey(),
-            'hash' => sha1($user->getEmailForVerification()),
-        ]) . '&signature=invalid';
+        $validUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $user->getKey(),
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+        $validParams = $this->extractVerificationParams($validUrl);
+        $validParams['signature'] = 'invalid'; // 修改簽名使其無效
 
-        $response1 = $this->postJson('/api/v1/auth/verify-email', [
-            'verification_url' => $invalidSignatureUrl
-        ]);
+        $response1 = $this->postJson('/api/v1/auth/verify-email', $validParams);
         $response1->assertStatus(400);
 
         // 測試案例 2：錯誤的用戶 ID
@@ -231,9 +233,8 @@ final class EmailVerificationTest extends TestCase
             ]
         );
 
-        $response2 = $this->postJson('/api/v1/auth/verify-email', [
-            'verification_url' => $wrongUserUrl
-        ]);
+        $wrongUserParams = $this->extractVerificationParams($wrongUserUrl);
+        $response2 = $this->postJson('/api/v1/auth/verify-email', $wrongUserParams);
         $response2->assertStatus(404);
 
         // 測試案例 3：錯誤的 hash
@@ -246,9 +247,8 @@ final class EmailVerificationTest extends TestCase
             ]
         );
 
-        $response3 = $this->postJson('/api/v1/auth/verify-email', [
-            'verification_url' => $wrongHashUrl
-        ]);
+        $wrongHashParams = $this->extractVerificationParams($wrongHashUrl);
+        $response3 = $this->postJson('/api/v1/auth/verify-email', $wrongHashParams);
         $response3->assertStatus(400);
     }
 
@@ -275,9 +275,8 @@ final class EmailVerificationTest extends TestCase
             ]
         );
 
-        $response = $this->postJson('/api/v1/auth/verify-email', [
-            'verification_url' => $expiredUrl
-        ]);
+        $expiredParams = $this->extractVerificationParams($expiredUrl);
+        $response = $this->postJson('/api/v1/auth/verify-email', $expiredParams);
 
         $response->assertStatus(400);
         $response->assertJsonStructure([
@@ -325,9 +324,8 @@ final class EmailVerificationTest extends TestCase
         // 用戶A嘗試使用用戶B的驗證連結
         Sanctum::actingAs($userA);
 
-        $response = $this->postJson('/api/v1/auth/verify-email', [
-            'verification_url' => $userBVerificationUrl
-        ]);
+        $userBParams = $this->extractVerificationParams($userBVerificationUrl);
+        $response = $this->postJson('/api/v1/auth/verify-email', $userBParams);
 
         // 應該被拒絕
         $response->assertStatus(403);
@@ -360,9 +358,8 @@ final class EmailVerificationTest extends TestCase
         );
 
         // 未認證的請求
-        $response = $this->postJson('/api/v1/auth/verify-email', [
-            'verification_url' => $verificationUrl
-        ]);
+        $verificationParams = $this->extractVerificationParams($verificationUrl);
+        $response = $this->postJson('/api/v1/auth/verify-email', $verificationParams);
 
         $response->assertStatus(401);
 
@@ -404,9 +401,8 @@ final class EmailVerificationTest extends TestCase
             ]
         );
 
-        $verifyResponse = $this->postJson('/api/v1/auth/verify-email', [
-            'verification_url' => $verificationUrl
-        ]);
+        $verificationParams = $this->extractVerificationParams($verificationUrl);
+        $verifyResponse = $this->postJson('/api/v1/auth/verify-email', $verificationParams);
         $verifyResponse->assertStatus(200);
 
         // 驗證後再次嘗試敏感操作
@@ -417,5 +413,28 @@ final class EmailVerificationTest extends TestCase
 
         // 驗證後應該可以進行敏感操作
         $this->assertLessThanOrEqual(400, $postVerificationResponse->status());
+    }
+
+    /**
+     * Helper method to extract verification parameters from URL.
+     */
+    private function extractVerificationParams(string $verificationUrl): array
+    {
+        $parsedUrl = parse_url($verificationUrl);
+
+        // 從路徑提取 id 和 hash
+        $pathParts = explode('/', $parsedUrl['path']);
+        $id = $pathParts[\count($pathParts) - 2]; // 倒數第二個部分
+        $hash = $pathParts[\count($pathParts) - 1]; // 最後一個部分
+
+        // 從查詢字串提取 expires 和 signature
+        parse_str($parsedUrl['query'], $queryParams);
+
+        return [
+            'id' => $id,
+            'hash' => $hash,
+            'expires' => $queryParams['expires'],
+            'signature' => $queryParams['signature'],
+        ];
     }
 }

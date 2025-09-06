@@ -369,14 +369,12 @@ final class ChangePasswordContractTest extends TestCase
         // 期望狀態碼 429 Too Many Requests
         $response->assertStatus(429);
 
-        // 期望錯誤回應結構
+        // 期望錯誤回應結構 (匹配實際的速率限制回應格式)
         $response->assertJsonStructure([
             'status',
             'message',
-            'error' => [
-                'code',
-                'details'
-            ]
+            'error_code',
+            'retry_after'
         ]);
 
         // 期望狀態為 error

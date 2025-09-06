@@ -48,7 +48,29 @@ Route::prefix('v1')->group(function () {
             Route::get('/users', [AdminController::class, 'getUsers']);
             Route::get('/users/{id}', [AdminController::class, 'getUser']);
             Route::put('/users/{id}', [AdminController::class, 'updateUser']);
+            Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
             Route::post('/users/{id}/reset-password', [AdminController::class, 'resetUserPassword']);
+            Route::post('/users/{id}/deactivate', [AdminController::class, 'deactivateUser']);
+            Route::post('/users/{id}/activate', [AdminController::class, 'activateUser']);
+
+            // 批量操作路由
+            Route::post('users/bulk-deactivate', [AdminController::class, 'bulkDeactivateUsers']);
+            Route::post('users/bulk-activate', [AdminController::class, 'bulkActivateUsers']);
+            Route::post('users/bulk-update', [AdminController::class, 'bulkUpdateUsers']);
+            Route::post('users/bulk-role-change', [AdminController::class, 'bulkRoleChangeUsers']);
+            Route::post('users/bulk-delete', [AdminController::class, 'bulkDeleteUsers']);
+
+            // 統計相關路由
+            Route::get('statistics/users', [AdminController::class, 'getUserStatistics']);
+            Route::get('statistics/system', [AdminController::class, 'getSystemStatistics']);
+            Route::get('statistics/activity', [AdminController::class, 'getActivityStatistics']);
+
+            // 系統健康檢查
+            Route::get('system/health', [AdminController::class, 'getSystemHealth']);
+
+            // 審計日誌
+            Route::get('audit-log', [AdminController::class, 'getAuditLog']);
+            Route::get('activity-log', [AdminController::class, 'getActivityLog']);
         });
     });
 });

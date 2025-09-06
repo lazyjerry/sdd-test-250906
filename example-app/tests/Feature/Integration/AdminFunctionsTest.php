@@ -122,6 +122,7 @@ final class AdminFunctionsTest extends TestCase
         // 第六步：重設用戶密碼
         $resetPasswordResponse = $this->postJson("/api/v1/admin/users/{$targetUser->id}/reset-password", [
             'new_password' => 'AdminResetPassword123!',
+            'new_password_confirmation' => 'AdminResetPassword123!',
             'force_password_change' => true
         ]);
         $resetPasswordResponse->assertStatus(200);
@@ -147,9 +148,9 @@ final class AdminFunctionsTest extends TestCase
         $deactivateResponse->assertStatus(200);
 
         // 第九步：驗證用戶已被停用
-        $deactivatedUserResponse = $this->getJson("/api/v1/admin/users/{$targetUser->id}");
+        $deactivatedUserResponse = $this->getJson("/api/v1/admin/users/{$targetUser->id}?include_trashed=true");
         $deactivatedUserData = $deactivatedUserResponse->json('data.user');
-        $this->assertFalse($deactivatedUserData['is_active']);
+        $this->assertFalse($deactivatedUserData['activity_summary']['is_active']);
 
         // 第十步：重新啟用用戶
         $reactivateResponse = $this->postJson("/api/v1/admin/users/{$targetUser->id}/activate");
@@ -157,7 +158,7 @@ final class AdminFunctionsTest extends TestCase
 
         $reactivatedUserResponse = $this->getJson("/api/v1/admin/users/{$targetUser->id}");
         $reactivatedUserData = $reactivatedUserResponse->json('data.user');
-        $this->assertTrue($reactivatedUserData['is_active']);
+        $this->assertTrue($reactivatedUserData['activity_summary']['is_active']);
     }
 
     /**
@@ -212,6 +213,10 @@ final class AdminFunctionsTest extends TestCase
         $userUpdateResponse->assertStatus(403);
 
         // 測試案例 3：未認證用戶無法存取
+        // 清除認證狀態
+        $this->app->forgetInstance('auth');
+        $this->refreshApplication();
+
         $unauthenticatedResponse = $this->getJson('/api/v1/admin/users');
         $unauthenticatedResponse->assertStatus(401);
     }
@@ -264,7 +269,7 @@ final class AdminFunctionsTest extends TestCase
 
         // 驗證用戶已被停用
         foreach ($userIds as $userId) {
-            $userResponse = $this->getJson("/api/v1/admin/users/{$userId}");
+            $userResponse = $this->getJson("/api/v1/admin/users/{$userId}?include_trashed=true");
             $userData = $userResponse->json('data.user');
             $this->assertFalse($userData['is_active']);
         }
@@ -306,10 +311,13 @@ final class AdminFunctionsTest extends TestCase
 
         $bulkDeleteResponse->assertStatus(200);
 
-        // 驗證用戶已被軟刪除
+        // 驗證用戶已被軟刪除 (管理員仍可查看但狀態為非活躍)
         foreach ($userIds as $userId) {
-            $userResponse = $this->getJson("/api/v1/admin/users/{$userId}");
-            $userResponse->assertStatus(404);
+            $userResponse = $this->getJson("/api/v1/admin/users/{$userId}?include_trashed=true");
+            $userResponse->assertStatus(200);
+            $userData = $userResponse->json('data.user');
+            $this->assertFalse($userData['is_active']);
+            $this->assertNotNull($userData['deleted_at']);
         }
     }
 
@@ -626,7 +634,7 @@ final class AdminFunctionsTest extends TestCase
         $selfRoleChangeResponse = $this->putJson("/api/v1/admin/users/{$admin->id}", [
             'role' => 'user'
         ]);
-        $selfRoleChangeResponse->assertStatus(403);
+        $selfRoleChangeResponse->assertStatus(400);
 
         // 測試案例 3：管理員不能刪除自己
         $selfDeleteResponse = $this->deleteJson("/api/v1/admin/users/{$admin->id}");

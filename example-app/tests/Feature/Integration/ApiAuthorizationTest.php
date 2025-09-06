@@ -40,6 +40,7 @@ final class ApiAuthorizationTest extends TestCase
         // 第一步：建立不同角色的用戶
         $adminUser = User::factory()->create([
             'email' => 'admin@example.com',
+            'username' => 'admin_user',
             'password' => Hash::make('AdminPassword123!'),
             'role' => 'admin',
             'email_verified_at' => now()
@@ -47,6 +48,7 @@ final class ApiAuthorizationTest extends TestCase
 
         $regularUser = User::factory()->create([
             'email' => 'user@example.com',
+            'username' => 'regular_user',
             'password' => Hash::make('UserPassword123!'),
             'role' => 'user',
             'email_verified_at' => now()
@@ -54,7 +56,7 @@ final class ApiAuthorizationTest extends TestCase
 
         // 第二步：獲取不同用戶的 token
         $adminLoginResponse = $this->postJson('/api/v1/auth/login', [
-            'email' => 'admin@example.com',
+            'username' => 'admin_user',
             'password' => 'AdminPassword123!',
             'device_name' => 'Admin Device'
         ]);
@@ -62,7 +64,7 @@ final class ApiAuthorizationTest extends TestCase
         $adminToken = $adminLoginResponse->json('data.token');
 
         $userLoginResponse = $this->postJson('/api/v1/auth/login', [
-            'email' => 'user@example.com',
+            'username' => 'regular_user',
             'password' => 'UserPassword123!',
             'device_name' => 'User Device'
         ]);

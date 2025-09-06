@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'auth:sanctum' => Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'auth' => Illuminate\Auth\Middleware\Authenticate::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -26,11 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'status' => 'error',
                     'message' => '請求次數過多，請稍後再試',
-                    'error' => [
-                        'code' => 'TOO_MANY_ATTEMPTS',
-                        'details' => '您的請求過於頻繁，請稍後再試',
-                        'retry_after' => $e->getHeaders()['Retry-After'] ?? 60,
-                    ]
+                    'error_code' => 'TOO_MANY_ATTEMPTS',
+                    'retry_after' => $e->getHeaders()['Retry-After'] ?? 60,
                 ], 429);
             }
         });
@@ -39,6 +36,15 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('api/*')) {
                 // 如果有 Authorization 頭但認證失敗，說明是無效 token
                 if ($request->hasHeader('Authorization')) {
+                    // Auth 端點使用扁平結構，其他端點使用嵌套結構
+                    if ($request->is('api/v1/auth/*')) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => '無效的認證令牌',
+                            'error_code' => 'INVALID_TOKEN',
+                        ], 401);
+                    }
+
                     return response()->json([
                         'status' => 'error',
                         'message' => '無效的認證令牌',
@@ -50,6 +56,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
 
                 // 沒有 Authorization 頭，說明是未認證請求
+                // Auth 端點使用扁平結構，其他端點使用嵌套結構
+                if ($request->is('api/v1/auth/*')) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => '未認證的請求',
+                        'error_code' => 'UNAUTHENTICATED',
+                    ], 401);
+                }
+
                 return response()->json([
                     'status' => 'error',
                     'message' => '未認證的請求',

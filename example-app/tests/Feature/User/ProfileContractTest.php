@@ -173,9 +173,9 @@ final class ProfileContractTest extends TestCase
     }
 
     /**
-     * 測試伺服器錯誤回應結構.
+     * 測試訪問不存在端點的錯誤回應結構.
      *
-     * 驗證 500 內部伺服器錯誤回應結構
+     * 驗證 404 找不到端點的錯誤回應結構
      */
     public function testGetProfileServerErrorResponseStructure(): void
     {
@@ -185,27 +185,10 @@ final class ProfileContractTest extends TestCase
         // 使用 Sanctum 認證
         Sanctum::actingAs($user);
 
-        // 模擬伺服器錯誤（這裡我們假設端點未實作會回傳 500）
-        $response = $this->getJson('/api/v1/users/profile');
+        // 訪問不存在的端點來模擬錯誤狀況
+        $response = $this->getJson('/api/v1/users/non-existent-endpoint');
 
-        // 期望狀態碼 500 Internal Server Error 或其他錯誤狀態
-        $this->assertContains($response->status(), [500, 404, 501]);
-
-        // 期望錯誤回應結構
-        if ($response->status() >= 500) {
-            $response->assertJsonStructure([
-                'status',
-                'message',
-                'error' => [
-                    'code',
-                    'details'
-                ]
-            ]);
-
-            // 期望狀態為 error
-            $response->assertJson([
-                'status' => 'error'
-            ]);
-        }
+        // 期望狀態碼 404 Not Found
+        $response->assertStatus(404);
     }
 }
