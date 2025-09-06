@@ -376,8 +376,8 @@ final class EmailVerificationToggleTest extends TestCase
 
             $response->assertStatus(200);
 
-            // 清理
-            \App\Models\SysUser::truncate();
+            // 清理 - 現在使用統一的 User 模型
+            User::where('role', 'admin')->delete();
         }
     }
 

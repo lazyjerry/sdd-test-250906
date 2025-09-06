@@ -165,13 +165,8 @@ class AdminController extends Controller
     /**
      * 更新用戶資料.
      */
-    public function updateUser(Request $request, $id): JsonResponse
+    public function updateUser(\App\Http\Requests\UserUpdateRequest $request, $id): JsonResponse
     {
-        // 檢查管理員權限
-        if ($adminCheck = $this->checkAdminRole($request)) {
-            return $adminCheck;
-        }
-
         $user = User::find($id);
 
         if (!$user) {
@@ -183,27 +178,6 @@ class AdminController extends Controller
                     'details' => '指定 ID 的用戶不存在'
                 ]
             ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'email' => ['sometimes', 'required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role' => ['sometimes', 'required', 'string', 'in:user,admin'],
-            'username' => ['sometimes', 'required', 'string', 'max:255', 'unique:users,username,' . $user->id],
-            'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
-            'email_verified_at' => ['sometimes', 'nullable', 'date'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '資料驗證失敗',
-                'error' => [
-                    'code' => 'VALIDATION_ERROR',
-                    'details' => $validator->errors(),
-                    'validation_errors' => $validator->errors()
-                ]
-            ], 422);
         }
 
         // 檢查管理員是否試圖降級自己
@@ -1359,78 +1333,6 @@ class AdminController extends Controller
                 ],
             ],
         ], 200);
-    }
-
-    /**
-     * 創建新的系統管理員用戶.
-     *
-     * @param CreateSysUserRequest $request
-     */
-    public function createSysUser(\App\Http\Requests\CreateSysUserRequest $request): JsonResponse
-    {
-        try {
-            // 驗證已在 CreateSysUserRequest 中完成
-            $validated = $request->validated();
-
-            // 創建新的管理員用戶
-            $adminUser = User::create([
-                'username' => $validated['username'],
-                'password' => Hash::make($validated['password']),
-                'name' => $validated['name'],
-                'email' => $validated['email'] ?? $validated['username'] . '@admin.local', // 如果沒有提供 email，生成一個預設的
-                'role' => 'admin', // 設定為管理員
-                'permissions' => $validated['permissions'],
-                'email_verified_at' => now(), // 管理員自動驗證 email
-            ]);
-
-            // 記錄創建日誌
-            \Illuminate\Support\Facades\Log::info('新管理員用戶創建', [
-                'creator_id' => $request->user()->id,
-                'creator_username' => $request->user()->username,
-                'new_admin_id' => $adminUser->id,
-                'new_admin_username' => $adminUser->username,
-                'permissions' => $adminUser->permissions,
-            ]);
-
-            // 返回創建成功的響應
-            return response()->json([
-                'data' => [
-                    'id' => $adminUser->id,
-                    'username' => $adminUser->username,
-                    'name' => $adminUser->name,
-                    'email' => $adminUser->email,
-                    'role' => $adminUser->role,
-                    'permissions' => $adminUser->permissions,
-                    'created_at' => $adminUser->created_at,
-                    'updated_at' => $adminUser->updated_at,
-                ],
-                'message' => '管理員用戶創建成功'
-            ], 201);
-        } catch (\Illuminate\Database\QueryException $e) {
-            // 處理資料庫錯誤
-            \Illuminate\Support\Facades\Log::error('創建管理員用戶時發生資料庫錯誤', [
-                'error' => $e->getMessage(),
-                'creator_id' => $request->user()->id ?? null,
-                'request_data' => $request->except(['password', 'password_confirmation']),
-            ]);
-
-            return response()->json([
-                'message' => '創建管理員用戶失敗',
-                'errors' => ['database' => ['資料庫操作失敗，請稍後再試']]
-            ], 500);
-        } catch (\Exception $e) {
-            // 處理其他錯誤
-            \Illuminate\Support\Facades\Log::error('創建管理員用戶時發生未預期錯誤', [
-                'error' => $e->getMessage(),
-                'creator_id' => $request->user()->id ?? null,
-                'request_data' => $request->except(['password', 'password_confirmation']),
-            ]);
-
-            return response()->json([
-                'message' => '創建管理員用戶失敗',
-                'errors' => ['system' => ['系統錯誤，請聯繫管理員']]
-            ], 500);
-        }
     }
 
     /**

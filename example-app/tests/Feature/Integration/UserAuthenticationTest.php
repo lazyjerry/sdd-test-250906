@@ -123,13 +123,14 @@ final class UserAuthenticationTest extends TestCase
     public function testMultiDeviceAuthenticationManagement(): void
     {
         $user = User::factory()->create([
+            'username' => 'multideviceuser',
             'email' => 'multidevice@example.com',
             'password' => Hash::make('MultiDevice123!'),
             'email_verified_at' => now()
         ]);
 
         $loginData = [
-            'email' => 'multidevice@example.com',
+            'username' => 'multideviceuser',
             'password' => 'MultiDevice123!',
         ];
 
@@ -221,13 +222,14 @@ final class UserAuthenticationTest extends TestCase
     public function testLogoutAllDevices(): void
     {
         $user = User::factory()->create([
+            'username' => 'logoutalluser',
             'email' => 'logoutall@example.com',
             'password' => Hash::make('LogoutAll123!'),
             'email_verified_at' => now()
         ]);
 
         $loginData = [
-            'email' => 'logoutall@example.com',
+            'username' => 'logoutalluser',
             'password' => 'LogoutAll123!',
         ];
 
@@ -276,6 +278,7 @@ final class UserAuthenticationTest extends TestCase
     public function testTokenExpirationAndRefresh(): void
     {
         $user = User::factory()->create([
+            'username' => 'tokenexpuser',
             'email' => 'tokenexp@example.com',
             'password' => Hash::make('TokenExp123!'),
             'email_verified_at' => now()
@@ -283,7 +286,7 @@ final class UserAuthenticationTest extends TestCase
 
         // 登入獲取 token
         $loginResponse = $this->postJson('/api/v1/auth/login', [
-            'email' => 'tokenexp@example.com',
+            'username' => 'tokenexpuser',
             'password' => 'TokenExp123!',
             'device_name' => 'Expiration Test'
         ]);
@@ -346,6 +349,7 @@ final class UserAuthenticationTest extends TestCase
     public function testAuthenticationFailureScenarios(): void
     {
         $user = User::factory()->create([
+            'username' => 'authfailuser',
             'email' => 'authfail@example.com',
             'password' => Hash::make('CorrectPassword123!'),
             'email_verified_at' => now()
@@ -353,19 +357,19 @@ final class UserAuthenticationTest extends TestCase
 
         // 測試案例 1：錯誤的密碼
         $wrongPasswordResponse = $this->postJson('/api/v1/auth/login', [
-            'email' => 'authfail@example.com',
+            'username' => 'authfailuser',
             'password' => 'WrongPassword123!',
             'device_name' => 'Test Device'
         ]);
         $wrongPasswordResponse->assertStatus(401);
 
-        // 測試案例 2：不存在的郵箱
-        $nonExistentEmailResponse = $this->postJson('/api/v1/auth/login', [
-            'email' => 'nonexistent@example.com',
+        // 測試案例 2：不存在的用戶名
+        $nonExistentUserResponse = $this->postJson('/api/v1/auth/login', [
+            'username' => 'nonexistentuser',
             'password' => 'CorrectPassword123!',
             'device_name' => 'Test Device'
         ]);
-        $nonExistentEmailResponse->assertStatus(401);
+        $nonExistentUserResponse->assertStatus(401);
 
         // 測試案例 3：無效的 token
         $invalidTokenResponse = $this->getJson('/api/v1/users/profile', [
@@ -393,6 +397,7 @@ final class UserAuthenticationTest extends TestCase
     {
         // 測試軟刪除用戶的認證
         $deletedUser = User::factory()->create([
+            'username' => 'deleteduser',
             'email' => 'deleted@example.com',
             'password' => Hash::make('DeletedUser123!'),
             'email_verified_at' => now(),
@@ -400,7 +405,7 @@ final class UserAuthenticationTest extends TestCase
         ]);
 
         $deletedUserLoginResponse = $this->postJson('/api/v1/auth/login', [
-            'email' => 'deleted@example.com',
+            'username' => 'deleteduser',
             'password' => 'DeletedUser123!',
             'device_name' => 'Test Device'
         ]);
@@ -408,13 +413,14 @@ final class UserAuthenticationTest extends TestCase
 
         // 測試未驗證郵箱用戶的認證
         $unverifiedUser = User::factory()->create([
+            'username' => 'unverifieduser',
             'email' => 'unverified@example.com',
             'password' => Hash::make('UnverifiedUser123!'),
             'email_verified_at' => null
         ]);
 
         $unverifiedUserLoginResponse = $this->postJson('/api/v1/auth/login', [
-            'email' => 'unverified@example.com',
+            'username' => 'unverifieduser',
             'password' => 'UnverifiedUser123!',
             'device_name' => 'Test Device'
         ]);
@@ -441,13 +447,14 @@ final class UserAuthenticationTest extends TestCase
     public function testConcurrentLoginLimits(): void
     {
         $user = User::factory()->create([
+            'username' => 'concurrentuser',
             'email' => 'concurrent@example.com',
             'password' => Hash::make('ConcurrentLogin123!'),
             'email_verified_at' => now()
         ]);
 
         $loginData = [
-            'email' => 'concurrent@example.com',
+            'username' => 'concurrentuser',
             'password' => 'ConcurrentLogin123!',
         ];
 
@@ -493,13 +500,14 @@ final class UserAuthenticationTest extends TestCase
     public function testAuthenticationSecurityHeaders(): void
     {
         $user = User::factory()->create([
+            'username' => 'securityuser',
             'email' => 'security@example.com',
             'password' => Hash::make('SecurityTest123!'),
             'email_verified_at' => now()
         ]);
 
         $loginResponse = $this->postJson('/api/v1/auth/login', [
-            'email' => 'security@example.com',
+            'username' => 'securityuser',
             'password' => 'SecurityTest123!',
             'device_name' => 'Security Test'
         ]);

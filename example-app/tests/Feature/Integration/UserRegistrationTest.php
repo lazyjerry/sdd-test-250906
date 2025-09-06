@@ -38,6 +38,7 @@ final class UserRegistrationTest extends TestCase
     {
         // 準備註冊資料
         $registrationData = [
+            'username' => 'johndoe',
             'name' => 'John Doe',
             'email' => 'john@example.com',
             'password' => 'SecurePassword123!',
@@ -108,11 +109,13 @@ final class UserRegistrationTest extends TestCase
     {
         // 第一步：建立第一個用戶
         $firstUser = User::factory()->create([
+            'username' => 'firstuser',
             'email' => 'existing@example.com'
         ]);
 
         // 第二步：嘗試使用相同郵箱註冊
         $duplicateData = [
+            'username' => 'anotheruser',
             'name' => 'Another User',
             'email' => 'existing@example.com',
             'password' => 'DifferentPassword123!',
@@ -123,20 +126,90 @@ final class UserRegistrationTest extends TestCase
 
         // 驗證註冊被拒絕
         $response->assertStatus(422);
-        $response->assertJsonStructure([
-            'status',
-            'message',
-            'error' => [
-                'code',
-                'details',
-                'validation_errors' => [
-                    'email'
-                ]
-            ]
-        ]);
+        $response->assertJsonValidationErrors(['email']);
+
+        // 驗證錯誤訊息
+        $errors = $response->json('errors.email');
+        $this->assertIsArray($errors);
+        $this->assertStringContainsString('已存在', $errors[0]);
 
         // 驗證資料庫中只有一個用戶
         $this->assertSame(1, User::where('email', 'existing@example.com')->count());
+    }
+
+    /**
+     * 測試重複用戶名註冊防護.
+     *
+     * 驗證系統阻止重複用戶名註冊
+     */
+    public function testDuplicateUsernameRegistrationPrevention(): void
+    {
+        // 第一步：建立第一個用戶
+        $firstUser = User::factory()->create([
+            'username' => 'existinguser',
+            'email' => 'first@example.com'
+        ]);
+
+        // 第二步：嘗試使用相同用戶名註冊
+        $duplicateData = [
+            'username' => 'existinguser',
+            'email' => 'second@example.com',
+            'password' => 'DifferentPassword123!',
+            'password_confirmation' => 'DifferentPassword123!',
+        ];
+
+        $response = $this->postJson('/api/v1/auth/register', $duplicateData);
+
+        // 驗證註冊被拒絕
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['username']);
+
+        // 驗證錯誤訊息包含重複相關資訊
+        $errors = $response->json('errors.username');
+        $this->assertIsArray($errors);
+        $this->assertStringContainsString('已存在', $errors[0]);
+
+        // 驗證資料庫中只有一個用戶使用該用戶名
+        $this->assertSame(1, User::where('username', 'existinguser')->count());
+    }
+
+    /**
+     * 測試同時重複用戶名和郵箱的情況.
+     *
+     * 驗證系統可以同時檢測多個重複字段
+     */
+    public function testDuplicateBothUsernameAndEmailPrevention(): void
+    {
+        // 第一步：建立第一個用戶
+        $firstUser = User::factory()->create([
+            'username' => 'duplicateuser',
+            'email' => 'duplicate@example.com'
+        ]);
+
+        // 第二步：嘗試使用相同用戶名和郵箱註冊
+        $duplicateData = [
+            'username' => 'duplicateuser',
+            'email' => 'duplicate@example.com',
+            'password' => 'DifferentPassword123!',
+            'password_confirmation' => 'DifferentPassword123!',
+        ];
+
+        $response = $this->postJson('/api/v1/auth/register', $duplicateData);
+
+        // 驗證註冊被拒絕
+        $response->assertStatus(422);
+
+        // 驗證兩個字段都有錯誤
+        $response->assertJsonValidationErrors(['username', 'email']);
+
+        // 驗證錯誤訊息
+        $usernameErrors = $response->json('errors.username');
+        $emailErrors = $response->json('errors.email');
+
+        $this->assertIsArray($usernameErrors);
+        $this->assertIsArray($emailErrors);
+        $this->assertStringContainsString('已存在', $usernameErrors[0]);
+        $this->assertStringContainsString('已存在', $emailErrors[0]);
     }
 
     /**

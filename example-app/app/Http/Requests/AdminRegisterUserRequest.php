@@ -7,11 +7,9 @@ use App\Http\Requests\Traits\UserValidationRules;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Create Admin User Request.
- *
- * 驗證創建管理員用戶的請求數據
+ * 管理員註冊其他用戶請求驗證.
  */
-class CreateAdminUserRequest extends FormRequest
+class AdminRegisterUserRequest extends FormRequest
 {
     use ApiResponseFormat;
     use UserValidationRules;
@@ -21,18 +19,16 @@ class CreateAdminUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // 檢查用戶是否為管理員
+        // 檢查當前用戶是否為管理員
         return $this->user() && $this->user()->isAdmin();
     }
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array<string, array<mixed>|\Illuminate\Contracts\Validation\ValidationRule|string>
      */
     public function rules(): array
     {
-        return $this->getAdminCreateUserRules();
+        return $this->getAdminRegisterUserRules();
     }
 
     /**
@@ -40,7 +36,22 @@ class CreateAdminUserRequest extends FormRequest
      */
     public function messages(): array
     {
-        return $this->getEnglishValidationMessages();
+        return $this->getCommonValidationMessages();
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     */
+    public function attributes(): array
+    {
+        return [
+            'name' => '姓名',
+            'username' => '用戶名',
+            'email' => '電子郵件',
+            'phone' => '手機號碼',
+            'password' => '密碼',
+            'role' => '角色',
+        ];
     }
 
     /**
@@ -48,6 +59,6 @@ class CreateAdminUserRequest extends FormRequest
      */
     protected function failedAuthorization()
     {
-        $this->failedAuthorizationForAdmin();
+        $this->failedAuthorizationForInsufficientPrivileges();
     }
 }

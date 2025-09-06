@@ -50,24 +50,28 @@ final class AdminLoginContractTest extends TestCase
         // 驗證響應結構
         $response->assertStatus(200)
             ->assertJsonStructure([
+                'status',
+                'message',
                 'data' => [
                     'user' => [
                         'id',
                         'username',
                         'name',
+                        'email',
+                        'role',
                         'permissions',
+                        'last_login_at',
                         'created_at',
                         'updated_at'
                     ],
-                    'token' => [
-                        'access_token',
-                        'token_type',
-                        'expires_in'
-                    ]
-                ],
-                'message'
+                    'token',
+                    'token_type',
+                    'expires_in',
+                    'expires_at'
+                ]
             ])
             ->assertJson([
+                'status' => 'success',
                 'message' => '管理員登入成功'
             ]);
 
@@ -119,10 +123,14 @@ final class AdminLoginContractTest extends TestCase
 
         $response->assertStatus(401)
             ->assertJsonStructure([
-                'message'
+                'status',
+                'message',
+                'error_code'
             ])
             ->assertJson([
-                'message' => '用戶名或密碼錯誤'
+                'status' => 'error',
+                'message' => '用戶名或密碼錯誤',
+                'error_code' => 'INVALID_CREDENTIALS'
             ]);
     }
 
@@ -142,10 +150,14 @@ final class AdminLoginContractTest extends TestCase
 
         $response->assertStatus(401)
             ->assertJsonStructure([
-                'message'
+                'status',
+                'message',
+                'error_code'
             ])
             ->assertJson([
-                'message' => '用戶名或密碼錯誤'
+                'status' => 'error',
+                'message' => '用戶名或密碼錯誤',
+                'error_code' => 'INVALID_CREDENTIALS'
             ]);
     }
 

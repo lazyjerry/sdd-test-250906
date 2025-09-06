@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Integration;
 
-use App\Models\SysUser;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
@@ -33,9 +33,11 @@ final class AdminCreateAdminTest extends TestCase
     public function testCompleteAdminCreationWorkflow()
     {
         // 準備現有管理員
-        $existingAdmin = SysUser::factory()->create([
-            'username' => 'masteradmin',
-            'permissions' => ['manage_users', 'create_admins', 'manage_system', 'view_reports']
+        $existingAdmin = User::factory()->create([
+            'username' => 'existingadmin',
+            'email' => 'admin@example.com',
+            'role' => 'admin',
+            'permissions' => ['manage_users']
         ]);
 
         // 使用 Sanctum 認證
@@ -47,11 +49,18 @@ final class AdminCreateAdminTest extends TestCase
             'password' => 'SecureAdminPass123!',
             'password_confirmation' => 'SecureAdminPass123!',
             'name' => '2024新管理員',
+            'role' => 'admin',
             'permissions' => ['manage_users', 'view_reports']
         ];
 
         // 步驟 1: 創建新管理員
-        $response = $this->postJson('/api/v1/admin/sys-users', $newAdminData);
+        $response = $this->postJson('/api/v1/admin/users', $newAdminData);
+
+        // 顯示響應內容以進行除錯
+        if (201 !== $response->status()) {
+            dump('Response status: ' . $response->status());
+            dump('Response content: ' . $response->content());
+        }
 
         // 驗證創建響應
         $response->assertStatus(201)
@@ -78,7 +87,7 @@ final class AdminCreateAdminTest extends TestCase
             'name' => '2024新管理員'
         ]);
 
-        $newAdmin = SysUser::where('username', 'newadmin2024')->first();
+        $newAdmin = User::where('username', 'newadmin2024')->first();
         $this->assertNotNull($newAdmin);
         $this->assertTrue(Hash::check('SecureAdminPass123!', $newAdmin->password));
         $this->assertSame(['manage_users', 'view_reports'], $newAdmin->permissions);
@@ -113,9 +122,11 @@ final class AdminCreateAdminTest extends TestCase
     public function testAdminCreationPermissionValidation()
     {
         // 準備沒有創建管理員權限的管理員
-        $limitedAdmin = SysUser::factory()->create([
+        $limitedAdmin = User::factory()->create([
             'username' => 'limitedadmin',
-            'permissions' => ['manage_users'] // 沒有 create_admins 權限
+            'email' => 'limited@example.com',
+            'role' => 'admin',
+            'permissions' => ['view_users'] // 沒有 manage_users 權限
         ]);
 
         Sanctum::actingAs($limitedAdmin);
@@ -124,11 +135,12 @@ final class AdminCreateAdminTest extends TestCase
             'username' => 'unauthorizedadmin',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
-            'name' => '未授權管理員'
+            'name' => '未授權管理員',
+            'role' => 'admin'
         ];
 
         // 嘗試創建管理員
-        $response = $this->postJson('/api/v1/admin/sys-users', $newAdminData);
+        $response = $this->postJson('/api/v1/admin/users', $newAdminData);
 
         // 應該被拒絕
         $response->assertStatus(403)
@@ -149,7 +161,8 @@ final class AdminCreateAdminTest extends TestCase
      */
     public function testAdminCreationInputValidation()
     {
-        $admin = SysUser::factory()->create([
+        $admin = User::factory()->create([
+            'role' => 'admin',
             'permissions' => ['create_admins']
         ]);
         Sanctum::actingAs($admin);
@@ -159,7 +172,7 @@ final class AdminCreateAdminTest extends TestCase
             // 缺少必要字段
             [
                 'data' => [],
-                'expectedErrors' => ['username', 'password', 'name']
+                'expectedErrors' => ['username', 'password', 'name', 'role']
             ],
             // 用戶名太短
             [
@@ -167,7 +180,8 @@ final class AdminCreateAdminTest extends TestCase
                     'username' => 'ab',
                     'password' => 'ValidPass123!',
                     'password_confirmation' => 'ValidPass123!',
-                    'name' => 'Valid Name'
+                    'name' => 'Valid Name',
+                    'role' => 'admin'
                 ],
                 'expectedErrors' => ['username']
             ],
@@ -177,7 +191,8 @@ final class AdminCreateAdminTest extends TestCase
                     'username' => 'validuser',
                     'password' => 'Password123!',
                     'password_confirmation' => 'DifferentPass123!',
-                    'name' => 'Valid Name'
+                    'name' => 'Valid Name',
+                    'role' => 'admin'
                 ],
                 'expectedErrors' => ['password']
             ],
@@ -187,14 +202,15 @@ final class AdminCreateAdminTest extends TestCase
                     'username' => 'validuser',
                     'password' => 'weak',
                     'password_confirmation' => 'weak',
-                    'name' => 'Valid Name'
+                    'name' => 'Valid Name',
+                    'role' => 'admin'
                 ],
                 'expectedErrors' => ['password']
             ]
         ];
 
         foreach ($testCases as $case) {
-            $response = $this->postJson('/api/v1/admin/sys-users', $case['data']);
+            $response = $this->postJson('/api/v1/admin/users', $case['data']);
 
             $response->assertStatus(422);
 
@@ -211,29 +227,32 @@ final class AdminCreateAdminTest extends TestCase
      */
     public function testDuplicateUsernameHandling()
     {
-        $admin = SysUser::factory()->create([
+        $admin = User::factory()->create([
+            'role' => 'admin',
             'permissions' => ['create_admins']
         ]);
         Sanctum::actingAs($admin);
 
         // 先創建一個管理員
-        $existingAdmin = SysUser::factory()->create([
-            'username' => 'existingadmin'
+        $existingAdmin = User::factory()->create([
+            'username' => 'existingadmin',
+            'role' => 'admin'
         ]);
 
         // 嘗試創建相同用戶名的管理員
-        $response = $this->postJson('/api/v1/admin/sys-users', [
+        $response = $this->postJson('/api/v1/admin/users', [
             'username' => 'existingadmin',
             'password' => 'NewPassword123!',
             'password_confirmation' => 'NewPassword123!',
-            'name' => '重複用戶名測試'
+            'name' => '重複用戶名測試',
+            'role' => 'admin'
         ]);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['username'])
             ->assertJson([
                 'errors' => [
-                    'username' => ['用戶名已存在']
+                    'username' => ['Username already exists']
                 ]
             ]);
     }
@@ -246,24 +265,26 @@ final class AdminCreateAdminTest extends TestCase
     public function testAdminPermissionInheritanceAndLimits()
     {
         // 準備具有部分權限的管理員
-        $creatorAdmin = SysUser::factory()->create([
+        $creatorAdmin = User::factory()->create([
+            'role' => 'admin',
             'permissions' => ['create_admins', 'manage_users', 'manage_system']
         ]);
         Sanctum::actingAs($creatorAdmin);
 
         // 嘗試創建具有相同和額外權限的管理員
-        $response = $this->postJson('/api/v1/admin/sys-users', [
+        $response = $this->postJson('/api/v1/admin/users', [
             'username' => 'superadmin',
             'password' => 'SuperPass123!',
             'password_confirmation' => 'SuperPass123!',
             'name' => '超級管理員',
+            'role' => 'admin',
             'permissions' => ['create_admins', 'manage_users', 'manage_system', 'view_reports'] // view_reports 不在創建者權限中
         ]);
 
         // 應該成功創建，但權限被限制為創建者的權限子集
         $response->assertStatus(201);
 
-        $newAdmin = SysUser::where('username', 'superadmin')->first();
+        $newAdmin = User::where('username', 'superadmin')->first();
 
         // 驗證新管理員的權限只包含創建者有的權限
         $expectedPermissions = ['create_admins', 'manage_users', 'manage_system']; // view_reports 被過濾掉
@@ -278,7 +299,8 @@ final class AdminCreateAdminTest extends TestCase
      */
     public function testBatchAdminCreationScenario()
     {
-        $admin = SysUser::factory()->create([
+        $admin = User::factory()->create([
+            'role' => 'admin',
             'permissions' => ['create_admins', 'manage_users']
         ]);
         Sanctum::actingAs($admin);
@@ -291,11 +313,12 @@ final class AdminCreateAdminTest extends TestCase
 
         // 創建多個管理員
         foreach ($adminUsers as $userData) {
-            $response = $this->postJson('/api/v1/admin/sys-users', [
+            $response = $this->postJson('/api/v1/admin/users', [
                 'username' => $userData['username'],
                 'password' => 'AdminPass123!',
                 'password_confirmation' => 'AdminPass123!',
                 'name' => $userData['name'],
+                'role' => 'admin',
                 'permissions' => ['manage_users']
             ]);
 

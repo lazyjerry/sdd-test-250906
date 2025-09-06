@@ -4,14 +4,13 @@ namespace App\Http\Requests;
 
 use App\Http\Requests\Traits\ApiResponseFormat;
 use App\Http\Requests\Traits\UserValidationRules;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Create Admin User Request.
- *
- * 驗證創建管理員用戶的請求數據
+ * 用戶更新請求驗證.
  */
-class CreateAdminUserRequest extends FormRequest
+class UserUpdateRequest extends FormRequest
 {
     use ApiResponseFormat;
     use UserValidationRules;
@@ -27,12 +26,12 @@ class CreateAdminUserRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array<string, array<mixed>|\Illuminate\Contracts\Validation\ValidationRule|string>
      */
     public function rules(): array
     {
-        return $this->getAdminCreateUserRules();
+        $userId = $this->route('id'); // 從路由參數獲取用戶ID
+
+        return $this->getUserUpdateRules($userId);
     }
 
     /**
@@ -40,7 +39,22 @@ class CreateAdminUserRequest extends FormRequest
      */
     public function messages(): array
     {
-        return $this->getEnglishValidationMessages();
+        return $this->getCommonValidationMessages();
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     */
+    public function attributes(): array
+    {
+        return [
+            'name' => '姓名',
+            'username' => '用戶名',
+            'email' => '電子郵件',
+            'phone' => '手機號碼',
+            'role' => '角色',
+            'email_verified_at' => 'Email 驗證時間',
+        ];
     }
 
     /**
@@ -49,5 +63,13 @@ class CreateAdminUserRequest extends FormRequest
     protected function failedAuthorization()
     {
         $this->failedAuthorizationForAdmin();
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        $this->failedValidationWithDetails($validator);
     }
 }

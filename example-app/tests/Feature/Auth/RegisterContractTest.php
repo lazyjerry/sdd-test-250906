@@ -57,9 +57,12 @@ final class RegisterContractTest extends TestCase
 
         // 驗證回應值
         $response->assertJson([
-            'status' => 'success',
-            'message' => '註冊成功'
+            'status' => 'success'
         ]);
+
+        // 驗證訊息是註冊成功的某種形式
+        $message = $response->json('message');
+        $this->assertStringContainsString('註冊成功', $message);
     }
 
     /**
@@ -132,6 +135,96 @@ final class RegisterContractTest extends TestCase
                 'username'
             ]
         ]);
+
+        // 驗證錯誤訊息包含用戶名已存在
+        $response->assertJsonValidationErrors(['username']);
+        $this->assertStringContainsString('已存在', $response->json('errors.username.0'));
+    }
+
+    /**
+     * 測試重複 Email 註冊時的回應結構.
+     */
+    public function testRegisterDuplicateEmailResponseStructure()
+    {
+        // 建立已存在的使用者
+        $existingUser = [
+            'username' => 'firstuser',
+            'email' => 'duplicate@example.com',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123'
+        ];
+
+        // 第一次註冊（應該成功）
+        $this->postJson('/api/v1/auth/register', $existingUser);
+
+        // 嘗試重複註冊相同 email
+        $duplicateEmailRequest = [
+            'username' => 'seconduser',
+            'email' => 'duplicate@example.com',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123'
+        ];
+
+        $response = $this->postJson('/api/v1/auth/register', $duplicateEmailRequest);
+
+        // 期望狀態碼 422 Unprocessable Entity
+        $response->assertStatus(422);
+
+        // 期望錯誤回應結構
+        $response->assertJsonStructure([
+            'status',
+            'message',
+            'errors' => [
+                'email'
+            ]
+        ]);
+
+        // 驗證錯誤訊息包含email已存在
+        $response->assertJsonValidationErrors(['email']);
+        $this->assertStringContainsString('已存在', $response->json('errors.email.0'));
+    }
+
+    /**
+     * 測試同時重複 username 和 email 的回應.
+     */
+    public function testRegisterDuplicateBothUsernameAndEmailResponseStructure()
+    {
+        // 建立已存在的使用者
+        $existingUser = [
+            'username' => 'duplicateuser',
+            'email' => 'duplicateemail@example.com',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123'
+        ];
+
+        // 第一次註冊（應該成功）
+        $this->postJson('/api/v1/auth/register', $existingUser);
+
+        // 嘗試重複註冊相同的 username 和 email
+        $duplicateRequest = [
+            'username' => 'duplicateuser',
+            'email' => 'duplicateemail@example.com',
+            'password' => 'NewPassword123',
+            'password_confirmation' => 'NewPassword123'
+        ];
+
+        $response = $this->postJson('/api/v1/auth/register', $duplicateRequest);
+
+        // 期望狀態碼 422 Unprocessable Entity
+        $response->assertStatus(422);
+
+        // 期望錯誤回應結構包含兩個錯誤
+        $response->assertJsonStructure([
+            'status',
+            'message',
+            'errors' => [
+                'username',
+                'email'
+            ]
+        ]);
+
+        // 驗證兩個字段都有錯誤
+        $response->assertJsonValidationErrors(['username', 'email']);
     }
 
     /**

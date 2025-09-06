@@ -47,7 +47,6 @@ Route::prefix('v1')->group(function () {
         // 管理員相關路由
         Route::prefix('admin')->group(function () {
             // 管理員用戶管理
-            Route::post('/sys-users', [AdminController::class, 'createSysUser']); // 創建管理員用戶 (舊版)
             Route::post('/users', [AdminController::class, 'createUser']); // 創建用戶 (新版，統一 User Table)
 
             // 用戶管理

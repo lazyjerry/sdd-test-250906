@@ -14,31 +14,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
 
 class AuthController extends Controller
 {
     /**
      * 用戶註冊.
      */
-    public function register(Request $request): JsonResponse
+    public function register(\App\Http\Requests\UserRegistrationRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'name' => ['nullable', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '資料驗證失敗',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         $user = User::create([
             'name' => $request->name ?? $request->username,
             'username' => $request->username,
@@ -88,34 +71,9 @@ class AuthController extends Controller
     /**
      * 管理員註冊 (需要現有管理員權限).
      */
-    public function registerAdmin(Request $request): JsonResponse
+    public function registerAdmin(\App\Http\Requests\AdminRegisterUserRequest $request): JsonResponse
     {
-        // 檢查當前用戶是否為管理員
         $currentUser = Auth::user();
-        if (!$currentUser || 'admin' !== $currentUser->role) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '沒有權限執行此操作',
-                'error_code' => 'INSUFFICIENT_PRIVILEGES',
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name' => ['nullable', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:admin,user'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '資料驗證失敗',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
 
         $user = User::create([
             'name' => $request->name ?? $request->username,
@@ -155,22 +113,29 @@ class AuthController extends Controller
     /**
      * 用戶登入.
      */
-    public function login(Request $request): JsonResponse
+    public function login(\App\Http\Requests\UserLoginRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'username' => ['required', 'string'],
-            'password' => ['required', 'string'],
-        ]);
+        $username = $request->username;
+        $password = $request->password;
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '資料驗證失敗',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
+        // 判斷是 email 還是 username
+        $field = filter_var($username, \FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
-        if (!Auth::guard('web')->attempt(['username' => $request->username, 'password' => $request->password])) {
+        // 查找用戶，確保 role 為 user
+        $user = User::where($field, $username)
+            ->where('role', 'user')
+            ->first();
+
+        // 驗證用戶存在且密碼正確
+        if (!$user || !Hash::check($password, $user->password)) {
+            // 記錄登入失敗
+            \Illuminate\Support\Facades\Log::warning('用戶登入失敗', [
+                'username' => $username,
+                'reason' => !$user ? 'user_not_found_or_not_user_role' : 'invalid_password',
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
             return response()->json([
                 'status' => 'error',
                 'message' => '使用者名稱或密碼錯誤',
@@ -178,7 +143,17 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $user = Auth::user();
+        // 檢查用戶是否被軟刪除
+        if ($user->trashed()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '使用者名稱或密碼錯誤',
+                'error_code' => 'INVALID_CREDENTIALS',
+            ], 401);
+        }
+
+        // 手動登入用戶
+        Auth::login($user);
 
         // 檢查是否需要郵件驗證
         $requireEmailVerification = config('auth.require_email_verification', true);
@@ -193,6 +168,18 @@ class AuthController extends Controller
                 'error_code' => 'EMAIL_NOT_VERIFIED',
             ], 403);
         }
+
+        // 更新最後登入時間
+        $user->updateLastLogin();
+
+        // 記錄成功登入
+        \Illuminate\Support\Facades\Log::info('用戶登入成功', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
         $token = $user->createToken('auth_token')->plainTextToken;
         $expiresAt = now()->addDays(30); // Token 有效期 30 天
 
@@ -237,20 +224,8 @@ class AuthController extends Controller
     /**
      * 忘記密碼
      */
-    public function forgotPassword(Request $request): JsonResponse
+    public function forgotPassword(\App\Http\Requests\ForgotPasswordRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'email' => ['required', 'email'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '資料驗證失敗',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         // 不管結果如何，都返回相同的成功訊息（安全考量）
         $status = Password::sendResetLink(
             $request->only('email')
@@ -268,22 +243,8 @@ class AuthController extends Controller
     /**
      * 重設密碼
      */
-    public function resetPassword(Request $request): JsonResponse
+    public function resetPassword(\App\Http\Requests\PasswordResetRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'token' => ['required'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '資料驗證失敗',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
@@ -341,19 +302,22 @@ class AuthController extends Controller
      */
     public function verifyEmail(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'id' => ['required', 'integer'],
-            'hash' => ['required', 'string'],
-            'expires' => ['required', 'integer'],
-            'signature' => ['required', 'string'],
-        ]);
+        // 手動驗證 (因為有時候這個方法被 verifyEmailByLink 調用)
+        if (!$request->has(['id', 'hash', 'expires', 'signature'])) {
+            $validator = Validator::make($request->all(), [
+                'id' => ['required', 'integer'],
+                'hash' => ['required', 'string'],
+                'expires' => ['required', 'integer'],
+                'signature' => ['required', 'string'],
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '資料驗證失敗',
-                'errors' => $validator->errors(),
-            ], 422);
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => '資料驗證失敗',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
         }
 
         try {
@@ -450,6 +414,27 @@ class AuthController extends Controller
      */
     public function verifyEmailByLink(Request $request, $id, $hash): JsonResponse
     {
+        // 手動驗證參數
+        $validator = Validator::make([
+            'id' => $id,
+            'hash' => $hash,
+            'expires' => $request->query('expires'),
+            'signature' => $request->query('signature'),
+        ], [
+            'id' => ['required', 'integer'],
+            'hash' => ['required', 'string'],
+            'expires' => ['required', 'integer'],
+            'signature' => ['required', 'string'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '資料驗證失敗',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
         // 將路由參數和查詢參數合併到 request 中
         $request->merge([
             'id' => $id,
@@ -465,15 +450,19 @@ class AuthController extends Controller
     /**
      * 管理員專用登入.
      *
-     * 管理員使用用戶名登入，不需要 email 驗證
+     * 管理員使用用戶名或email登入，不需要 email 驗證
      */
     public function adminLogin(\App\Http\Requests\AdminLoginRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
+            $username = $validated['username'];
+
+            // 判斷是 email 還是 username
+            $field = filter_var($username, \FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
             // 查找管理員用戶（role 為 admin 或 super_admin）
-            $admin = User::where('username', $validated['username'])
+            $admin = User::where($field, $username)
                 ->whereIn('role', ['admin', 'super_admin'])
                 ->first();
 
@@ -481,13 +470,16 @@ class AuthController extends Controller
             if (!$admin || !Hash::check($validated['password'], $admin->password)) {
                 // 記錄登入失敗
                 \Illuminate\Support\Facades\Log::warning('管理員登入失敗', [
-                    'username' => $validated['username'],
+                    'username' => $username,
+                    'reason' => !$admin ? 'user_not_found_or_not_admin' : 'invalid_password',
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ]);
 
                 return response()->json([
-                    'message' => '用戶名或密碼錯誤'
+                    'status' => 'error',
+                    'message' => '用戶名或密碼錯誤',
+                    'error_code' => 'INVALID_CREDENTIALS',
                 ], 401);
             }
 
@@ -500,7 +492,9 @@ class AuthController extends Controller
                 ]);
 
                 return response()->json([
-                    'message' => '用戶名或密碼錯誤'
+                    'status' => 'error',
+                    'message' => '用戶名或密碼錯誤',
+                    'error_code' => 'INVALID_CREDENTIALS',
                 ], 401);
             }
 
@@ -520,6 +514,8 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
+                'status' => 'success',
+                'message' => '管理員登入成功',
                 'data' => [
                     'user' => [
                         'id' => $admin->id,
@@ -532,19 +528,17 @@ class AuthController extends Controller
                         'created_at' => $admin->created_at,
                         'updated_at' => $admin->updated_at,
                     ],
-                    'token' => [
-                        'access_token' => $token->plainTextToken,
-                        'token_type' => 'Bearer',
-                        'expires_in' => 24 * 3600, // 24 小時（秒）
-                    ]
+                    'token' => $token->plainTextToken,
+                    'token_type' => 'Bearer',
+                    'expires_in' => 24 * 3600, // 24 小時（秒）
+                    'expires_at' => now()->addHours(24)->toISOString(),
                 ],
-                'message' => '管理員登入成功'
             ], 200);
         } catch (\Exception $e) {
             // 記錄系統錯誤
             \Illuminate\Support\Facades\Log::error('管理員登入時發生系統錯誤', [
                 'error' => $e->getMessage(),
-                'username' => $validated['username'] ?? 'unknown',
+                'username' => $request->input('username', 'unknown'),
                 'ip' => $request->ip(),
             ]);
 
