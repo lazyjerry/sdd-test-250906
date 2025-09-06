@@ -45,6 +45,7 @@ Route::prefix('v1')->group(function () {
 
         // 管理員相關路由
         Route::prefix('admin')->group(function () {
+            // 用戶管理
             Route::get('/users', [AdminController::class, 'getUsers']);
             Route::get('/users/{id}', [AdminController::class, 'getUser']);
             Route::put('/users/{id}', [AdminController::class, 'updateUser']);
@@ -52,6 +53,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/users/{id}/reset-password', [AdminController::class, 'resetUserPassword']);
             Route::post('/users/{id}/deactivate', [AdminController::class, 'deactivateUser']);
             Route::post('/users/{id}/activate', [AdminController::class, 'activateUser']);
+
+            // 管理員註冊新用戶
+            Route::post('/register', [AuthController::class, 'registerAdmin']);
 
             // 批量操作路由
             Route::post('users/bulk-deactivate', [AdminController::class, 'bulkDeactivateUsers']);

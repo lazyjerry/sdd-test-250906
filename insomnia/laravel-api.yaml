@@ -1,0 +1,974 @@
+type: collection.insomnia.rest/5.0
+name: Laravel JDemo API 集合
+meta:
+  id: wrk_laravel_jdemo_api
+  created: 1725616800000
+  modified: 1725616800000
+  description: "Laravel 12 使用者管理 API 系統整合集合"
+
+collection:
+  # ===== 🔐 身份驗證 API =====
+  - url: "{{ _.base_url }}/auth/register"
+    name: 🔓 使用者註冊（公開）
+    meta:
+      id: req_user_register
+      created: 1725616800000
+      modified: 1725616800000
+      isPrivate: false
+      description: "公開使用者註冊，自動分配 user 角色"
+      sortKey: -1725616800000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "name": "一般使用者",
+          "username": "normaluser",
+          "email": "user@example.com",
+          "phone": "0900123456",
+          "password": "UserPassword123!",
+          "password_confirmation": "UserPassword123!"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/auth/login"
+    name: 🔑 使用者登入
+    meta:
+      id: req_user_login
+      created: 1725616799000
+      modified: 1725616799000
+      isPrivate: false
+      description: "使用者登入（支援 username 或 email）"
+      sortKey: -1725616799000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "username": "normaluser",
+          "password": "UserPassword123!",
+          "device_name": "User Client"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/auth/login"
+    name: 🔑 管理員登入
+    meta:
+      id: req_admin_login
+      created: 1725616798000
+      modified: 1725616798000
+      isPrivate: false
+      description: "管理員登入（可使用 username，無需 email）"
+      sortKey: -1725616798000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "username": "admin",
+          "password": "admin123",
+          "device_name": "Admin Panel"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/auth/logout"
+    name: 🚪 登出
+    meta:
+      id: req_logout
+      created: 1725616797000
+      modified: 1725616797000
+      isPrivate: false
+      description: "登出當前裝置"
+      sortKey: -1725616797000
+    method: POST
+    body:
+      mimeType: application/json
+      text: "{}"
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/auth/forgot-password"
+    name: 🔄 忘記密碼
+    meta:
+      id: req_forgot_password
+      created: 1725616796000
+      modified: 1725616796000
+      isPrivate: false
+      description: "忘記密碼請求"
+      sortKey: -1725616796000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "email": "user@example.com"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/auth/reset-password"
+    name: 🔄 重設密碼
+    meta:
+      id: req_reset_password
+      created: 1725616795000
+      modified: 1725616795000
+      isPrivate: false
+      description: "重設密碼"
+      sortKey: -1725616795000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "token": "reset_token_here",
+          "email": "user@example.com",
+          "password": "NewPassword123!",
+          "password_confirmation": "NewPassword123!"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/auth/verify-email"
+    name: ✉️ 驗證電子郵件
+    meta:
+      id: req_verify_email
+      created: 1725616794000
+      modified: 1725616794000
+      isPrivate: false
+      description: "驗證電子郵件"
+      sortKey: -1725616794000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "id": "1",
+          "hash": "verification_hash_here",
+          "expires": "1725703200",
+          "signature": "signature_here"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  # ===== 👤 使用者個人管理 API =====
+  - url: "{{ _.base_url }}/users/profile"
+    name: 👁️ 查看個人資料
+    meta:
+      id: req_get_profile
+      created: 1725616700000
+      modified: 1725616700000
+      isPrivate: false
+      description: "查看個人資料"
+      sortKey: -1725616700000
+    method: GET
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.user_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/users/profile"
+    name: ✏️ 更新個人資料
+    meta:
+      id: req_update_profile
+      created: 1725616699000
+      modified: 1725616699000
+      isPrivate: false
+      description: "更新個人資料"
+      sortKey: -1725616699000
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "name": "更新後的名稱",
+          "email": "updated@example.com",
+          "phone": "0900654321"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.user_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/users/change-password"
+    name: 🔒 變更個人密碼
+    meta:
+      id: req_change_password
+      created: 1725616698000
+      modified: 1725616698000
+      isPrivate: false
+      description: "變更個人密碼"
+      sortKey: -1725616698000
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "current_password": "UserPassword123!",
+          "password": "NewUserPassword123!",
+          "password_confirmation": "NewUserPassword123!"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.user_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  # ===== 👨‍💼 管理員功能 - 使用者建立 =====
+  - url: "{{ _.base_url }}/admin/register"
+    name: ➕ 管理員建立使用者（User 角色）
+    meta:
+      id: req_admin_register_user
+      created: 1725616600000
+      modified: 1725616600000
+      isPrivate: false
+      description: "管理員建立 user 角色使用者"
+      sortKey: -1725616600000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "name": "管理員建立的使用者",
+          "username": "admin_created_user",
+          "email": "admin_user@example.com",
+          "phone": "0900111222",
+          "password": "AdminUserPassword123!",
+          "password_confirmation": "AdminUserPassword123!",
+          "role": "user"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/register"
+    name: ➕ 管理員建立管理員（Admin 角色）
+    meta:
+      id: req_admin_register_admin
+      created: 1725616599000
+      modified: 1725616599000
+      isPrivate: false
+      description: "管理員建立 admin 角色使用者"
+      sortKey: -1725616599000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "name": "管理員建立的管理員",
+          "username": "admin_created_admin",
+          "email": "admin_admin@example.com",
+          "password": "AdminAdminPassword123!",
+          "password_confirmation": "AdminAdminPassword123!",
+          "role": "admin"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  # ===== 👨‍💼 管理員功能 - 使用者管理 =====
+  - url: "{{ _.base_url }}/admin/users"
+    name: 📋 管理員查看所有使用者
+    meta:
+      id: req_admin_get_users
+      created: 1725616590000
+      modified: 1725616590000
+      isPrivate: false
+      description: "管理員查看所有使用者列表"
+      sortKey: -1725616590000
+    method: GET
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/1"
+    name: 👁️ 管理員查看指定使用者
+    meta:
+      id: req_admin_get_user
+      created: 1725616589000
+      modified: 1725616589000
+      isPrivate: false
+      description: "管理員查看指定使用者詳情"
+      sortKey: -1725616589000
+    method: GET
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/1"
+    name: ✏️ 管理員更新使用者
+    meta:
+      id: req_admin_update_user
+      created: 1725616588000
+      modified: 1725616588000
+      isPrivate: false
+      description: "管理員更新使用者資料和角色"
+      sortKey: -1725616588000
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "name": "管理員更新的名稱",
+          "email": "admin_updated@example.com",
+          "phone": "0900999888",
+          "role": "user"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/1"
+    name: 🗑️ 管理員刪除使用者
+    meta:
+      id: req_admin_delete_user
+      created: 1725616587000
+      modified: 1725616587000
+      isPrivate: false
+      description: "管理員刪除使用者"
+      sortKey: -1725616587000
+    method: DELETE
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/1/activate"
+    name: ✅ 管理員啟用使用者
+    meta:
+      id: req_admin_activate_user
+      created: 1725616586000
+      modified: 1725616586000
+      isPrivate: false
+      description: "管理員啟用使用者"
+      sortKey: -1725616586000
+    method: POST
+    body:
+      mimeType: application/json
+      text: "{}"
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/1/deactivate"
+    name: ❌ 管理員停用使用者
+    meta:
+      id: req_admin_deactivate_user
+      created: 1725616585000
+      modified: 1725616585000
+      isPrivate: false
+      description: "管理員停用使用者"
+      sortKey: -1725616585000
+    method: POST
+    body:
+      mimeType: application/json
+      text: "{}"
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/1/reset-password"
+    name: 🔄 管理員重設使用者密碼
+    meta:
+      id: req_admin_reset_password
+      created: 1725616584000
+      modified: 1725616584000
+      isPrivate: false
+      description: "管理員重設使用者密碼"
+      sortKey: -1725616584000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "password": "NewResetPassword123!",
+          "password_confirmation": "NewResetPassword123!"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  # ===== 👨‍💼 管理員功能 - 批量操作 =====
+  - url: "{{ _.base_url }}/admin/users/bulk-activate"
+    name: ✅ 管理員批量啟用使用者
+    meta:
+      id: req_admin_bulk_activate
+      created: 1725616580000
+      modified: 1725616580000
+      isPrivate: false
+      description: "管理員批量啟用使用者"
+      sortKey: -1725616580000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "user_ids": [1, 2, 3, 4, 5]
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/bulk-deactivate"
+    name: ❌ 管理員批量停用使用者
+    meta:
+      id: req_admin_bulk_deactivate
+      created: 1725616579000
+      modified: 1725616579000
+      isPrivate: false
+      description: "管理員批量停用使用者"
+      sortKey: -1725616579000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "user_ids": [1, 2, 3, 4, 5]
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/bulk-delete"
+    name: 🗑️ 管理員批量刪除使用者
+    meta:
+      id: req_admin_bulk_delete
+      created: 1725616578000
+      modified: 1725616578000
+      isPrivate: false
+      description: "管理員批量刪除使用者"
+      sortKey: -1725616578000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "user_ids": [1, 2, 3, 4, 5]
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/bulk-update"
+    name: ✏️ 管理員批量更新使用者
+    meta:
+      id: req_admin_bulk_update
+      created: 1725616577000
+      modified: 1725616577000
+      isPrivate: false
+      description: "管理員批量更新使用者"
+      sortKey: -1725616577000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "user_ids": [1, 2, 3],
+          "updates": {
+            "role": "user",
+            "email_verified_at": "2025-09-06T12:00:00.000Z"
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/users/bulk-role-change"
+    name: 🔄 管理員批量變更角色
+    meta:
+      id: req_admin_bulk_role_change
+      created: 1725616576000
+      modified: 1725616576000
+      isPrivate: false
+      description: "管理員批量變更角色"
+      sortKey: -1725616576000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "user_ids": [2, 3, 4],
+          "role": "admin"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  # ===== 👨‍💼 管理員功能 - 統計與監控 =====
+  - url: "{{ _.base_url }}/admin/statistics/users"
+    name: 📊 管理員使用者統計
+    meta:
+      id: req_admin_user_stats
+      created: 1725616570000
+      modified: 1725616570000
+      isPrivate: false
+      description: "管理員查看使用者統計"
+      sortKey: -1725616570000
+    method: GET
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/statistics/system"
+    name: 🖥️ 管理員系統統計
+    meta:
+      id: req_admin_system_stats
+      created: 1725616569000
+      modified: 1725616569000
+      isPrivate: false
+      description: "管理員查看系統統計"
+      sortKey: -1725616569000
+    method: GET
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/statistics/activity"
+    name: 📈 管理員活動統計
+    meta:
+      id: req_admin_activity_stats
+      created: 1725616568000
+      modified: 1725616568000
+      isPrivate: false
+      description: "管理員查看活動統計"
+      sortKey: -1725616568000
+    method: GET
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/activity-log"
+    name: 📝 管理員活動日誌
+    meta:
+      id: req_admin_activity_log
+      created: 1725616567000
+      modified: 1725616567000
+      isPrivate: false
+      description: "管理員查看活動日誌"
+      sortKey: -1725616567000
+    method: GET
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/audit-log"
+    name: 🔍 管理員審計日誌
+    meta:
+      id: req_admin_audit_log
+      created: 1725616566000
+      modified: 1725616566000
+      isPrivate: false
+      description: "管理員查看審計日誌"
+      sortKey: -1725616566000
+    method: GET
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+  - url: "{{ _.base_url }}/admin/system/health"
+    name: 🏥 管理員系統健康檢查
+    meta:
+      id: req_admin_system_health
+      created: 1725616565000
+      modified: 1725616565000
+      isPrivate: false
+      description: "管理員檢查系統健康狀態"
+      sortKey: -1725616565000
+    method: GET
+    body: {}
+    headers:
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
+cookieJar:
+  name: 預設 Cookie 容器
+  meta:
+    id: jar_laravel_jdemo
+    created: 1725616800000
+    modified: 1725616800000
+
+environments:
+  name: 基礎環境
+  meta:
+    id: env_base_laravel
+    created: 1725616800000
+    modified: 1725616800000
+    isPrivate: false
+  subEnvironments:
+    - name: 開發環境
+      meta:
+        id: env_development
+        created: 1725616800001
+        modified: 1725616800001
+        isPrivate: false
+        sortKey: 1725616800001
+      data:
+        base_url: http://localhost/api/v1
+        token: ""
+        user_token: ""
+        admin_token: ""
+    - name: 測試環境
+      meta:
+        id: env_staging
+        created: 1725616800002
+        modified: 1725616800002
+        isPrivate: true
+        sortKey: 1725616800002
+      data:
+        base_url: https://staging.example.com/api/v1
+        token: ""
+        user_token: ""
+        admin_token: ""
+    - name: 正式環境
+      meta:
+        id: env_production
+        created: 1725616800003
+        modified: 1725616800003
+        isPrivate: true
+        sortKey: 1725616800003
+      data:
+        base_url: https://api.example.com/api/v1
+        token: ""
+        user_token: ""
+        admin_token: ""

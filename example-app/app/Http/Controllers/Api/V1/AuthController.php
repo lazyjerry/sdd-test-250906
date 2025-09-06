@@ -71,6 +71,73 @@ class AuthController extends Controller
     }
 
     /**
+     * 管理員註冊 (需要現有管理員權限).
+     */
+    public function registerAdmin(Request $request): JsonResponse
+    {
+        // 檢查當前用戶是否為管理員
+        $currentUser = Auth::user();
+        if (!$currentUser || 'admin' !== $currentUser->role) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '沒有權限執行此操作',
+                'error_code' => 'INSUFFICIENT_PRIVILEGES',
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => ['nullable', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'unique:users'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role' => ['required', 'string', 'in:admin,user'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '資料驗證失敗',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = User::create([
+            'name' => $request->name ?? $request->username,
+            'username' => $request->username,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'email_verified_at' => now(), // 管理員創建的用戶預設為已驗證
+        ]);
+
+        event(new Registered($user));
+
+        return response()->json([
+            'status' => 'success',
+            'message' => '用戶註冊成功',
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'role' => $user->role,
+                    'email_verified_at' => $user->email_verified_at,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                ],
+                'created_by' => [
+                    'id' => $currentUser->id,
+                    'username' => $currentUser->username,
+                ],
+            ],
+        ], 201);
+    }
+
+    /**
      * 用戶登入.
      */
     public function login(Request $request): JsonResponse
