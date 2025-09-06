@@ -41,7 +41,7 @@ final class AdminNoEmailLoginTest extends TestCase
             'role' => 'admin',
             'email_verified_at' => null, // 未驗證但可以登入
             'name' => '管理員用戶',
-            ]);
+        ]);
 
         // 使用用戶名和密碼登入
         $response = $this->postJson('/api/v1/auth/admin-login', [
@@ -100,7 +100,7 @@ final class AdminNoEmailLoginTest extends TestCase
             'email' => 'admin@example.com',
             'role' => 'admin',
             'name' => '有郵箱的管理員',
-            ]);
+        ]);
 
         // 使用用戶名登入（不使用 email）
         $response = $this->postJson('/api/v1/auth/admin-login', [
@@ -217,7 +217,7 @@ final class AdminNoEmailLoginTest extends TestCase
             'username' => 'testadmin',
             'password' => Hash::make('CorrectPassword123!'),
             'role' => 'admin',
-            ]);
+        ]);
 
         // 測試錯誤的密碼
         $response = $this->postJson('/api/v1/auth/admin-login', [
@@ -260,9 +260,9 @@ final class AdminNoEmailLoginTest extends TestCase
     {
         $admin = User::factory()->create([
             'username' => 'sessionadmin',
-            'password' => Hash::make('SessionPassword123!')
+            'password' => Hash::make('SessionPassword123!'),
             'role' => 'admin',
-            ]);
+        ]);
 
         // 登入
         $loginResponse = $this->postJson('/api/v1/auth/admin-login', [
@@ -301,9 +301,9 @@ final class AdminNoEmailLoginTest extends TestCase
     {
         $admin = User::factory()->create([
             'username' => 'multiadmin',
-            'password' => Hash::make('MultiPassword123!')
+            'password' => Hash::make('MultiPassword123!'),
             'role' => 'admin',
-            ]);
+        ]);
 
         $tokens = [];
 
