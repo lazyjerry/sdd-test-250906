@@ -54,10 +54,39 @@ Route::prefix('v1')->group(function () {
 });
 
 // 郵箱驗證路由 (為測試用的 temporarySignedRoute 提供支援)
-Route::get('/email/verify/{id}/{hash}', function () {
-    // 這個路由主要用於生成簽名URL，實際驗證透過API完成
-    return response()->json(['message' => 'Use POST /api/v1/auth/verify-email for email verification']);
-})->name('verification.verify');
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmailByLink'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
+/*
+ * ⚠️ RESTful API 設計原則衝突警告：
+ *
+ * 上述 GET 路由（郵箱驗證路由 ）違反了 RESTful API 的以下原則：
+ *
+ * 1. 【冪等性違反】- GET 請求應該是冪等的，不應改變伺服器狀態
+ *    → 但此路由會修改用戶的 email_verified_at 狀態
+ *
+ * 2. 【安全性違反】- GET 請求應該是"安全"的，只用於資料檢索
+ *    → 但此路由執行了狀態變更操作
+ *
+ * 3. 【語意不明確】- GET 通常表示"獲取資源"
+ *    → 但此路由實際執行"驗證動作"
+ *
+ * 4. 【快取問題】- GET 請求可能被瀏覽器/代理伺服器快取
+ *    → 可能導致重複驗證或驗證失效
+ *
+ * 5. 【記錄風險】- GET 參數會出現在存取記錄中
+ *    → 敏感的驗證參數可能被記錄
+ *
+ * 更符合 RESTful 的做法：
+ * - 使用 POST /api/v1/auth/verify-email 進行實際驗證
+ * - GET 路由僅用於重定向到前端頁面，由前端調用 POST API
+ *
+ * 保留此 GET 路由的原因：
+ * - Laravel 原生郵箱驗證機制的相容性
+ * - 使用者點擊郵件連結的便利性
+ * - temporarySignedRoute() 方法需要具名路由
+ */
 
 // 保留原有的測試路由
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

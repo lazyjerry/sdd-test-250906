@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0"
+		/>
+		<title>電子郵件驗證</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				max-width: 600px;
+				margin: 50px auto;
+				padding: 20px;
+				text-align: center;
+			}
+			.loading {
+				color: #666;
+			}
+			.success {
+				color: #28a745;
+			}
+			.error {
+				color: #dc3545;
+			}
+			.spinner {
+				border: 4px solid #f3f3f3;
+				border-top: 4px solid #3498db;
+				border-radius: 50%;
+				width: 40px;
+				height: 40px;
+				animation: spin 2s linear infinite;
+				margin: 20px auto;
+			}
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<h1>電子郵件驗證</h1>
+		<div
+			id="status"
+			class="loading"
+		>
+			<div class="spinner"></div>
+			<p>正在驗證您的電子郵件...</p>
+		</div>
+
+		<script>
+			// 從 URL 參數中提取驗證信息
+			function getUrlParams() {
+				const urlParams = new URLSearchParams(window.location.search);
+				return {
+					id: urlParams.get("id"),
+					hash: urlParams.get("hash"),
+					expires: urlParams.get("expires"),
+					signature: urlParams.get("signature"),
+				};
+			}
+
+			// 執行郵箱驗證
+			async function verifyEmail() {
+				const statusDiv = document.getElementById("status");
+
+				try {
+					const params = getUrlParams();
+
+					// 檢查必要參數是否存在
+					if (!params.id || !params.hash || !params.expires || !params.signature) {
+						throw new Error("驗證參數不完整");
+					}
+
+					// 調用後端 API 進行驗證
+					const response = await fetch("http://localhost:8000/api/v1/auth/verify-email", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							Accept: "application/json",
+						},
+						body: JSON.stringify(params),
+					});
+
+					const data = await response.json();
+
+					if (response.ok && data.status === "success") {
+						statusDiv.innerHTML = `
+                        <div class="success">
+                            <h2>✅ 驗證成功！</h2>
+                            <p>${data.message || "您的電子郵件已成功驗證。"}</p>
+                            <p>您現在可以登入您的帳戶了。</p>
+                            <button onclick="redirectToLogin()" style="margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                前往登入頁面
+                            </button>
+                        </div>
+                    `;
+					} else {
+						throw new Error(data.message || "驗證失敗");
+					}
+				} catch (error) {
+					statusDiv.innerHTML = `
+                    <div class="error">
+                        <h2>❌ 驗證失敗</h2>
+                        <p>錯誤訊息：${error.message}</p>
+                        <p>可能的原因：</p>
+                        <ul style="text-align: left; display: inline-block;">
+                            <li>驗證連結已過期</li>
+                            <li>驗證連結無效</li>
+                            <li>電子郵件已經被驗證過</li>
+                        </ul>
+                        <button onclick="contactSupport()" style="margin-top: 20px; padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            聯絡客服
+                        </button>
+                    </div>
+                `;
+				}
+			}
+
+			// 重定向到登入頁面
+			function redirectToLogin() {
+				// 這裡可以根據您的前端應用路由進行調整
+				window.location.href = "http://localhost:3000/login";
+			}
+
+			// 聯絡客服
+			function contactSupport() {
+				// 這裡可以根據您的需求進行調整
+				alert("請聯絡客服：support@example.com");
+			}
+
+			// 頁面載入時自動執行驗證
+			document.addEventListener("DOMContentLoaded", verifyEmail);
+		</script>
+	</body>
+</html>

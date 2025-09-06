@@ -1,0 +1,617 @@
+{
+	"_type": "export",
+	"__export_format": 4,
+	"__export_date": "2025-09-06T10:00:00.000Z",
+	"__export_source": "insomnia.desktop.app:v2023.5.8",
+	"resources": [
+		{
+			"_id": "wrk_laravel_api",
+			"_type": "workspace",
+			"name": "Laravel JDemo API",
+			"description": "Laravel 應用程式 RESTful API 集合",
+			"scope": "collection",
+			"created": 1725616800000,
+			"modified": 1725616800000
+		},
+		{
+			"_id": "env_base",
+			"_type": "environment",
+			"name": "Base Environment",
+			"data": {},
+			"dataPropertyOrder": null,
+			"color": null,
+			"isPrivate": false,
+			"metaSortKey": 1725616800000,
+			"created": 1725616800000,
+			"modified": 1725616800000,
+			"parentId": "wrk_laravel_api"
+		},
+		{
+			"_id": "env_dev",
+			"_type": "environment",
+			"name": "Development",
+			"data": {
+				"base_url": "http://localhost:8000/api/v1",
+				"token": ""
+			},
+			"dataPropertyOrder": {
+				"&": ["base_url", "token"]
+			},
+			"color": "#7d69cb",
+			"isPrivate": false,
+			"metaSortKey": 1725616800001,
+			"created": 1725616800001,
+			"modified": 1725616800001,
+			"parentId": "env_base"
+		},
+		{
+			"_id": "env_prod",
+			"_type": "environment",
+			"name": "Production",
+			"data": {
+				"base_url": "https://your-domain.com/api/v1",
+				"token": ""
+			},
+			"dataPropertyOrder": {
+				"&": ["base_url", "token"]
+			},
+			"color": "#d9534f",
+			"isPrivate": false,
+			"metaSortKey": 1725616800002,
+			"created": 1725616800002,
+			"modified": 1725616800002,
+			"parentId": "env_base"
+		},
+		{
+			"_id": "fld_auth",
+			"_type": "request_group",
+			"name": "認證相關",
+			"description": "用戶認證、註冊、登入相關 API",
+			"environment": {},
+			"environmentPropertyOrder": null,
+			"metaSortKey": -1725616800000,
+			"created": 1725616800000,
+			"modified": 1725616800000,
+			"parentId": "wrk_laravel_api"
+		},
+		{
+			"_id": "req_register",
+			"_type": "request",
+			"name": "用戶註冊",
+			"url": "{{ _.base_url }}/auth/register",
+			"method": "POST",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"name\": \"測試用戶\",\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"phone\": \"+886912345678\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616800000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616800000,
+			"modified": 1725616800000,
+			"parentId": "fld_auth"
+		},
+		{
+			"_id": "req_login",
+			"_type": "request",
+			"name": "用戶登入",
+			"url": "{{ _.base_url }}/auth/login",
+			"method": "POST",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616799000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616799000,
+			"modified": 1725616799000,
+			"parentId": "fld_auth"
+		},
+		{
+			"_id": "req_logout",
+			"_type": "request",
+			"name": "用戶登出",
+			"url": "{{ _.base_url }}/auth/logout",
+			"method": "POST",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				},
+				{
+					"name": "Authorization",
+					"value": "Bearer {{ _.token }}",
+					"id": "pair_auth"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616798000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616798000,
+			"modified": 1725616798000,
+			"parentId": "fld_auth"
+		},
+		{
+			"_id": "req_forgot_password",
+			"_type": "request",
+			"name": "忘記密碼",
+			"url": "{{ _.base_url }}/auth/forgot-password",
+			"method": "POST",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"email\": \"test@example.com\"\n}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616797000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616797000,
+			"modified": 1725616797000,
+			"parentId": "fld_auth"
+		},
+		{
+			"_id": "req_reset_password",
+			"_type": "request",
+			"name": "重設密碼",
+			"url": "{{ _.base_url }}/auth/reset-password",
+			"method": "POST",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"token\": \"reset_token_here\",\n  \"email\": \"test@example.com\",\n  \"password\": \"newpassword123\",\n  \"password_confirmation\": \"newpassword123\"\n}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616796000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616796000,
+			"modified": 1725616796000,
+			"parentId": "fld_auth"
+		},
+		{
+			"_id": "req_verify_email",
+			"_type": "request",
+			"name": "驗證電子郵件",
+			"url": "{{ _.base_url }}/auth/verify-email",
+			"method": "POST",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"id\": 1,\n  \"hash\": \"verification_hash_here\",\n  \"expires\": 1725616800,\n  \"signature\": \"signature_here\"\n}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616795000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616795000,
+			"modified": 1725616795000,
+			"parentId": "fld_auth"
+		},
+		{
+			"_id": "fld_users",
+			"_type": "request_group",
+			"name": "用戶管理",
+			"description": "用戶個人資料管理相關 API",
+			"environment": {},
+			"environmentPropertyOrder": null,
+			"metaSortKey": -1725616700000,
+			"created": 1725616700000,
+			"modified": 1725616700000,
+			"parentId": "wrk_laravel_api"
+		},
+		{
+			"_id": "req_profile",
+			"_type": "request",
+			"name": "獲取個人資料",
+			"url": "{{ _.base_url }}/users/profile",
+			"method": "GET",
+			"body": {},
+			"headers": [
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				},
+				{
+					"name": "Authorization",
+					"value": "Bearer {{ _.token }}",
+					"id": "pair_auth"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616700000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616700000,
+			"modified": 1725616700000,
+			"parentId": "fld_users"
+		},
+		{
+			"_id": "req_update_profile",
+			"_type": "request",
+			"name": "更新個人資料",
+			"url": "{{ _.base_url }}/users/profile",
+			"method": "PUT",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"name\": \"更新後的姓名\",\n  \"email\": \"newemail@example.com\",\n  \"phone\": \"+886987654321\"\n}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				},
+				{
+					"name": "Authorization",
+					"value": "Bearer {{ _.token }}",
+					"id": "pair_auth"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616699000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616699000,
+			"modified": 1725616699000,
+			"parentId": "fld_users"
+		},
+		{
+			"_id": "req_change_password",
+			"_type": "request",
+			"name": "修改密碼",
+			"url": "{{ _.base_url }}/users/change-password",
+			"method": "PUT",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"current_password\": \"oldpassword123\",\n  \"password\": \"newpassword123\",\n  \"password_confirmation\": \"newpassword123\"\n}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				},
+				{
+					"name": "Authorization",
+					"value": "Bearer {{ _.token }}",
+					"id": "pair_auth"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616698000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616698000,
+			"modified": 1725616698000,
+			"parentId": "fld_users"
+		},
+		{
+			"_id": "fld_admin",
+			"_type": "request_group",
+			"name": "管理員功能",
+			"description": "管理員專用 API",
+			"environment": {},
+			"environmentPropertyOrder": null,
+			"metaSortKey": -1725616600000,
+			"created": 1725616600000,
+			"modified": 1725616600000,
+			"parentId": "wrk_laravel_api"
+		},
+		{
+			"_id": "req_admin_get_users",
+			"_type": "request",
+			"name": "獲取用戶列表",
+			"url": "{{ _.base_url }}/admin/users",
+			"method": "GET",
+			"body": {},
+			"headers": [
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				},
+				{
+					"name": "Authorization",
+					"value": "Bearer {{ _.token }}",
+					"id": "pair_auth"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616600000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616600000,
+			"modified": 1725616600000,
+			"parentId": "fld_admin"
+		},
+		{
+			"_id": "req_admin_get_user",
+			"_type": "request",
+			"name": "獲取特定用戶",
+			"url": "{{ _.base_url }}/admin/users/1",
+			"method": "GET",
+			"body": {},
+			"headers": [
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				},
+				{
+					"name": "Authorization",
+					"value": "Bearer {{ _.token }}",
+					"id": "pair_auth"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616599000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616599000,
+			"modified": 1725616599000,
+			"parentId": "fld_admin"
+		},
+		{
+			"_id": "req_admin_update_user",
+			"_type": "request",
+			"name": "更新用戶資料",
+			"url": "{{ _.base_url }}/admin/users/1",
+			"method": "PUT",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"name\": \"管理員更新的姓名\",\n  \"email\": \"admin_updated@example.com\",\n  \"role\": \"user\",\n  \"phone\": \"+886911111111\"\n}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				},
+				{
+					"name": "Authorization",
+					"value": "Bearer {{ _.token }}",
+					"id": "pair_auth"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616598000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616598000,
+			"modified": 1725616598000,
+			"parentId": "fld_admin"
+		},
+		{
+			"_id": "req_admin_reset_user_password",
+			"_type": "request",
+			"name": "重設用戶密碼",
+			"url": "{{ _.base_url }}/admin/users/1/reset-password",
+			"method": "POST",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"password\": \"admin_new_password123\",\n  \"password_confirmation\": \"admin_new_password123\"\n}"
+			},
+			"headers": [
+				{
+					"name": "Content-Type",
+					"value": "application/json",
+					"id": "pair_content_type"
+				},
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				},
+				{
+					"name": "Authorization",
+					"value": "Bearer {{ _.token }}",
+					"id": "pair_auth"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616597000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616597000,
+			"modified": 1725616597000,
+			"parentId": "fld_admin"
+		},
+		{
+			"_id": "fld_test",
+			"_type": "request_group",
+			"name": "測試端點",
+			"description": "測試用 API 端點",
+			"environment": {},
+			"environmentPropertyOrder": null,
+			"metaSortKey": -1725616500000,
+			"created": 1725616500000,
+			"modified": 1725616500000,
+			"parentId": "wrk_laravel_api"
+		},
+		{
+			"_id": "req_test_user",
+			"_type": "request",
+			"name": "測試認證用戶",
+			"url": "{{ _.base_url }}/../user",
+			"method": "GET",
+			"body": {},
+			"headers": [
+				{
+					"name": "Accept",
+					"value": "application/json",
+					"id": "pair_accept"
+				},
+				{
+					"name": "Authorization",
+					"value": "Bearer {{ _.token }}",
+					"id": "pair_auth"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1725616500000,
+			"isPrivate": false,
+			"settingStoreCookies": true,
+			"settingSendCookies": true,
+			"settingDisableRenderRequestBody": false,
+			"settingEncodeUrl": true,
+			"settingRebuildPath": true,
+			"settingFollowRedirects": "global",
+			"created": 1725616500000,
+			"modified": 1725616500000,
+			"parentId": "fld_test"
+		}
+	]
+}

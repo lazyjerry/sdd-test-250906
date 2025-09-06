@@ -354,4 +354,21 @@ class AuthController extends Controller
             ], 400);
         }
     }
+
+    /**
+     * 驗證郵箱 (GET 路由專用).
+     */
+    public function verifyEmailByLink(Request $request, $id, $hash): JsonResponse
+    {
+        // 將路由參數和查詢參數合併到 request 中
+        $request->merge([
+            'id' => $id,
+            'hash' => $hash,
+            'expires' => $request->query('expires'),
+            'signature' => $request->query('signature'),
+        ]);
+
+        // 使用現有的驗證邏輯
+        return $this->verifyEmail($request);
+    }
 }
