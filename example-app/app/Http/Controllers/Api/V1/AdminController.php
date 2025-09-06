@@ -1362,6 +1362,120 @@ class AdminController extends Controller
     }
 
     /**
+     * 創建新的系統管理員用戶.
+     *
+     * @param CreateSysUserRequest $request
+     */
+    public function createSysUser(\App\Http\Requests\CreateSysUserRequest $request): JsonResponse
+    {
+        try {
+            // 驗證已在 CreateSysUserRequest 中完成
+            $validated = $request->validated();
+
+            // 創建新的管理員用戶
+            $adminUser = User::create([
+                'username' => $validated['username'],
+                'password' => Hash::make($validated['password']),
+                'name' => $validated['name'],
+                'email' => $validated['email'] ?? $validated['username'] . '@admin.local', // 如果沒有提供 email，生成一個預設的
+                'role' => 'admin', // 設定為管理員
+                'permissions' => $validated['permissions'],
+                'email_verified_at' => now(), // 管理員自動驗證 email
+            ]);
+
+            // 記錄創建日誌
+            \Illuminate\Support\Facades\Log::info('新管理員用戶創建', [
+                'creator_id' => $request->user()->id,
+                'creator_username' => $request->user()->username,
+                'new_admin_id' => $adminUser->id,
+                'new_admin_username' => $adminUser->username,
+                'permissions' => $adminUser->permissions,
+            ]);
+
+            // 返回創建成功的響應
+            return response()->json([
+                'data' => [
+                    'id' => $adminUser->id,
+                    'username' => $adminUser->username,
+                    'name' => $adminUser->name,
+                    'email' => $adminUser->email,
+                    'role' => $adminUser->role,
+                    'permissions' => $adminUser->permissions,
+                    'created_at' => $adminUser->created_at,
+                    'updated_at' => $adminUser->updated_at,
+                ],
+                'message' => '管理員用戶創建成功'
+            ], 201);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // 處理資料庫錯誤
+            \Illuminate\Support\Facades\Log::error('創建管理員用戶時發生資料庫錯誤', [
+                'error' => $e->getMessage(),
+                'creator_id' => $request->user()->id ?? null,
+                'request_data' => $request->except(['password', 'password_confirmation']),
+            ]);
+
+            return response()->json([
+                'message' => '創建管理員用戶失敗',
+                'errors' => ['database' => ['資料庫操作失敗，請稍後再試']]
+            ], 500);
+        } catch (\Exception $e) {
+            // 處理其他錯誤
+            \Illuminate\Support\Facades\Log::error('創建管理員用戶時發生未預期錯誤', [
+                'error' => $e->getMessage(),
+                'creator_id' => $request->user()->id ?? null,
+                'request_data' => $request->except(['password', 'password_confirmation']),
+            ]);
+
+            return response()->json([
+                'message' => '創建管理員用戶失敗',
+                'errors' => ['system' => ['系統錯誤，請聯繫管理員']]
+            ], 500);
+        }
+    }
+
+    /**
+     * 創建新的用戶 (統一 User Table).
+     */
+    public function createUser(\App\Http\Requests\CreateAdminUserRequest $request): JsonResponse
+    {
+        try {
+            // 檢查管理員權限
+            if ($adminCheck = $this->checkAdminRole($request)) {
+                return $adminCheck;
+            }
+
+            // 創建新用戶
+            $user = User::create([
+                'name' => $request->name,
+                'username' => $request->username,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => $request->role,
+                'permissions' => $this->getDefaultPermissions($request->role),
+                'email_verified_at' => 'admin' === $request->role ? now() : null, // 管理員自動驗證
+            ]);
+
+            return response()->json([
+                'message' => 'User created successfully',
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                ]
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * 生成隨機密碼
      */
     private function generateRandomPassword(int $length = 12): string
@@ -1409,7 +1523,7 @@ class AdminController extends Controller
         }
 
         // 如果用戶已認證但不是管理員，回傳 403
-        if ('admin' !== $user->role) {
+        if (!$user->isAdmin()) {
             return response()->json([
                 'status' => 'error',
                 'message' => '權限不足，需要管理員權限',
@@ -1421,5 +1535,31 @@ class AdminController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * 根據角色獲取預設權限.
+     */
+    private function getDefaultPermissions(string $role): array
+    {
+        return match ($role) {
+            'admin' => [
+                'manage_users',
+                'create_users',
+                'view_admin_panel',
+                'manage_roles',
+            ],
+            'super_admin' => [
+                'manage_users',
+                'create_users',
+                'delete_users',
+                'manage_system',
+                'view_admin_panel',
+                'manage_roles',
+                'manage_permissions',
+                'system_maintenance',
+            ],
+            default => []
+        };
     }
 }

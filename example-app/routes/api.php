@@ -23,6 +23,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 次/分鐘
+        Route::post('/admin-login', [AuthController::class, 'adminLogin'])->middleware('throttle:5,1'); // 管理員登入
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1'); // 5 次/分鐘
         Route::post('/reset-password', [AuthController::class, 'resetPassword']);
         Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
@@ -45,6 +46,10 @@ Route::prefix('v1')->group(function () {
 
         // 管理員相關路由
         Route::prefix('admin')->group(function () {
+            // 管理員用戶管理
+            Route::post('/sys-users', [AdminController::class, 'createSysUser']); // 創建管理員用戶 (舊版)
+            Route::post('/users', [AdminController::class, 'createUser']); // 創建用戶 (新版，統一 User Table)
+
             // 用戶管理
             Route::get('/users', [AdminController::class, 'getUsers']);
             Route::get('/users/{id}', [AdminController::class, 'getUser']);

@@ -5,17 +5,28 @@
 ## 主要功能
 
 - **角色基礎註冊系統**: 支援普通用戶自主註冊與管理員協助註冊
+- **統一用戶管理**: 使用單一 User Table 管理所有用戶類型，透過角色區分權限
+- **預設管理員系統**: 系統自動創建預設管理員，支援管理員創建其他管理員
+- **靈活登入方式**: 管理員支援 username 登入，無需 email 驗證
 - **JWT Token 認證**: Laravel Sanctum 提供安全的 API 認證
-- **密碼重設與郵箱驗證**: 完整的帳戶安全機制
+- **密碼重設與郵箱驗證**: 完整的帳戶安全機制，可配置是否需要 email 驗證
 - **個人資料管理**: 完整的用戶個人資料 CRUD 操作
 - **管理員使用者管理**: 全面的用戶管理功能（查看、編輯、刪除、角色管理）
 - **API 速率限制與安全防護**: 防止濫用和攻擊
 - **完整 API 文件與測試**: Insomnia 集合與詳細測試套件
 
+### 🆕 最新功能 - 管理員系統增強
+
+- **預設管理員**: 系統初始化時自動創建預設管理員帳號
+- **管理員專用登入**: `/api/v1/auth/admin-login` 支援 username 登入
+- **統一用戶創建**: `/api/v1/admin/users` 統一 API 創建所有類型用戶
+- **email 驗證控制**: 透過 `REQUIRE_EMAIL_VERIFICATION` 環境變數控制
+
 ### 角色差異註冊
 
 - **普通註冊** (`POST /api/v1/auth/register`): 任何人可註冊為 `user` 角色
 - **管理員註冊** (`POST /api/v1/admin/register`): 管理員可創建任何角色的用戶
+- **統一用戶創建** (`POST /api/v1/admin/users`): 管理員使用統一 API 創建用戶 🆕
 - **角色權限隔離**: 嚴格的權限控制，確保安全性
 - **完整測試覆蓋**: 14 個專門的角色註冊測試
 
@@ -73,13 +84,32 @@ example-app/
 
 ### 核心路由
 
+#### 認證路由
+
+```
+POST   /api/v1/auth/register              # 一般註冊
+POST   /api/v1/auth/login                 # 一般登入
+POST   /api/v1/auth/admin-login           # 管理員專用登入 🆕
+POST   /api/v1/auth/logout                # 登出
+```
+
+#### 用戶管理路由
+
 ```
 GET    /api/v1/users/profile              # 個人資料
 PUT    /api/v1/users/profile              # 更新資料
-POST   /api/v1/auth/register              # 一般註冊
-POST   /api/v1/auth/login                 # 登入
-POST   /api/v1/admin/register             # 管理員註冊用戶
-GET    /api/v1/admin/users                # 用戶列表（管理員）
+PUT    /api/v1/users/change-password      # 變更密碼
+```
+
+#### 管理員路由
+
+```
+POST   /api/v1/admin/users                # 創建用戶 (統一 API) 🆕
+GET    /api/v1/admin/users                # 用戶列表
+GET    /api/v1/admin/users/{id}           # 單一用戶詳情
+PUT    /api/v1/admin/users/{id}           # 更新用戶
+DELETE /api/v1/admin/users/{id}           # 刪除用戶
+POST   /api/v1/admin/register             # 管理員註冊用戶 (舊版)
 ```
 
 ## 安裝與啟動
@@ -144,10 +174,26 @@ MAIL_PORT=1025
 ./vendor/bin/sail artisan migrate
 ```
 
-7. **填充測試資料（可選）**
+7. **填充預設資料**
 
 ```bash
 ./vendor/bin/sail artisan db:seed
+```
+
+⚠️ **重要**: 系統會自動創建預設管理員帳號
+
+- **帳號**: `admin`
+- **密碼**: `admin123`
+- **請在生產環境中立即更改此密碼！**
+
+8. **🆕 Email 驗證設定**
+
+在 `.env` 中配置郵件驗證：
+
+```bash
+# 設定是否需要郵箱驗證
+REQUIRE_EMAIL_VERIFICATION=true   # 需要驗證
+REQUIRE_EMAIL_VERIFICATION=false  # 不需要驗證
 ```
 
 ### 服務訪問點
@@ -156,6 +202,126 @@ MAIL_PORT=1025
 - **API 文件**: http://localhost/swagger-ui/
 - **MailHog**: http://localhost:8025
 - **MySQL**: localhost:3306
+
+## 🆕 管理員系統功能
+
+### 預設管理員帳號
+
+系統初始化時會自動創建預設管理員：
+
+- **用戶名**: `admin`
+- **密碼**: `admin123`
+- **角色**: `super_admin`
+- **權限**: 所有系統權限
+
+### 管理員登入方式
+
+管理員支援兩種登入方式：
+
+#### 1. 管理員專用登入 (推薦)
+
+```bash
+curl -X POST http://localhost/api/v1/auth/admin-login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "admin123"}'
+```
+
+- 支援 `username` 登入，無需 email
+- 不受 email 驗證設定影響
+- 專為管理員設計的快速登入方式
+
+#### 2. 一般登入
+
+```bash
+curl -X POST http://localhost/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "password": "admin123"}'
+```
+
+### 創建新用戶
+
+管理員可以創建任何角色的用戶：
+
+```bash
+# 獲取管理員 token (先登入)
+TOKEN="your_admin_token_here"
+
+# 創建新管理員
+curl -X POST http://localhost/api/v1/admin/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "name": "新管理員",
+    "username": "newadmin",
+    "email": "newadmin@example.com",
+    "password": "SecurePass123",
+    "role": "admin"
+  }'
+
+# 創建一般用戶
+curl -X POST http://localhost/api/v1/admin/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "name": "一般用戶",
+    "username": "user1",
+    "email": "user1@example.com",
+    "password": "UserPass123",
+    "role": "user"
+  }'
+```
+
+### 支援的用戶角色
+
+- **`user`**: 一般用戶，基本權限
+- **`admin`**: 管理員，管理用戶權限
+- **`super_admin`**: 超級管理員，所有權限
+
+### Email 驗證控制
+
+透過環境變數控制是否需要 email 驗證：
+
+```bash
+# .env 設定
+REQUIRE_EMAIL_VERIFICATION=false  # 不需要驗證 (預設: true)
+```
+
+- `true`: 一般用戶註冊後需要驗證 email
+- `false`: 用戶註冊後直接可登入
+- 管理員始終不受此設定影響
+
+## 📋 API 端點總覽
+
+### 🔐 身份驗證
+
+- `POST /api/v1/auth/register` - 用戶註冊
+- `POST /api/v1/auth/login` - 一般登入
+- `POST /api/v1/auth/admin-login` - 🆕 管理員登入 (支援 username)
+- `POST /api/v1/auth/logout` - 登出
+- `POST /api/v1/auth/refresh` - 刷新 token
+
+### 👤 用戶管理
+
+- `GET /api/v1/user` - 獲取當前用戶資訊
+- `PUT /api/v1/user` - 更新用戶資訊
+
+### 🔑 管理員功能
+
+- `POST /api/v1/admin/users` - 🆕 創建新用戶 (任何角色)
+- `GET /api/v1/admin/users` - 查看所有用戶
+- `GET /api/v1/admin/users/{id}` - 查看特定用戶
+- `PUT /api/v1/admin/users/{id}` - 更新用戶資訊
+- `DELETE /api/v1/admin/users/{id}` - 刪除用戶
+
+### 📧 Email 驗證
+
+- `POST /api/v1/email/verification-notification` - 重新發送驗證郵件
+- `GET /api/v1/email/verify/{id}/{hash}` - 驗證 email
+
+### 📚 系統工具
+
+- `GET /swagger-ui/` - API 文檔
+- `GET /adminer.php` - 資料庫管理工具
 
 ## 🧪 測試
 
@@ -1017,24 +1183,49 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## 🆕 最新更新 - 角色基礎註冊系統
+## 🆕 最新更新 - 管理員系統增強
 
-### 新增功能
+### v2.0 新增功能 (最新)
+
+- **🔐 統一用戶表**: 使用單一 User 表取代 SysUsers，簡化架構
+- **⚡ 管理員快速登入**: 支援 username 登入，無需 email
+- **🛠️ 用戶創建 API**: 管理員可創建任何角色的用戶
+- **🚀 預設管理員**: 系統自動創建 admin 帳號 (admin/admin123)
+- **📧 Email 驗證控制**: 環境變數控制是否需要驗證
+- **🧪 完整測試**: 新增管理員功能測試套件
+
+### v1.0 角色基礎註冊系統
 
 - **✅ 雙層註冊機制**: 普通用戶自主註冊 + 管理員協助註冊
 - **✅ 角色權限控制**: 嚴格的角色隔離和權限驗證
 - **✅ 完整測試覆蓋**: 14 個專門測試確保功能穩定性
 - **✅ API 文檔完整**: 詳細的使用說明和範例
 
-### 快速開始
+### 快速開始 (最新功能)
 
 ```bash
-# 測試新的角色註冊功能
+# 測試管理員登入功能
+curl -X POST http://localhost/api/v1/auth/admin-login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "admin123"}'
+
+# 測試用戶創建功能
+curl -X POST http://localhost/api/v1/admin/users \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "測試用戶", "username": "test", "password": "Test123", "role": "user"}'
+```
+
+### 相容性測試
+
+```bash
+# 測試新的管理員功能
+./vendor/bin/sail test tests/Feature/Admin/AdminLoginTest.php
+./vendor/bin/sail test tests/Feature/Admin/CreateUserTest.php
+
+# 測試角色註冊功能 (v1.0)
 ./vendor/bin/sail test --filter="RoleBasedRegistrationTest"
 ./vendor/bin/sail test --filter="AdminRegisterContractTest"
-
-# 普通用戶註冊
-curl -X POST http://localhost/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",

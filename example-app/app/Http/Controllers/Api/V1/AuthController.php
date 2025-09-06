@@ -47,13 +47,27 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // 檢查是否需要郵件驗證
+        $requireEmailVerification = config('auth.require_email_verification', true);
+
+        if (!$requireEmailVerification) {
+            // 如果不需要驗證，直接標記為已驗證
+            $user->email_verified_at = now();
+            $user->save();
+        }
+
         event(new Registered($user));
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // 根據是否需要驗證返回不同的消息
+        $message = $requireEmailVerification
+            ? '註冊成功，請檢查您的電子郵件以完成驗證'
+            : '註冊成功';
+
         return response()->json([
             'status' => 'success',
-            'message' => '註冊成功',
+            'message' => $message,
             'data' => [
                 'user' => [
                     'id' => $user->id,
@@ -66,6 +80,7 @@ class AuthController extends Controller
                     'updated_at' => $user->updated_at,
                 ],
                 'token' => $token,
+                'email_verification_required' => $requireEmailVerification,
             ],
         ], 201);
     }
@@ -165,8 +180,11 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // 檢查電子郵件是否已驗證
-        if (!$user->hasVerifiedEmail()) {
+        // 檢查是否需要郵件驗證
+        $requireEmailVerification = config('auth.require_email_verification', true);
+
+        // 只有在需要驗證時才檢查郵件驗證狀態
+        if ($requireEmailVerification && !$user->hasVerifiedEmail()) {
             Auth::logout();
 
             return response()->json([
@@ -442,5 +460,97 @@ class AuthController extends Controller
 
         // 使用現有的驗證邏輯
         return $this->verifyEmail($request);
+    }
+
+    /**
+     * 管理員專用登入.
+     *
+     * 管理員使用用戶名登入，不需要 email 驗證
+     */
+    public function adminLogin(\App\Http\Requests\AdminLoginRequest $request): JsonResponse
+    {
+        try {
+            $validated = $request->validated();
+
+            // 查找管理員用戶（role 為 admin 或 super_admin）
+            $admin = User::where('username', $validated['username'])
+                ->whereIn('role', ['admin', 'super_admin'])
+                ->first();
+
+            // 驗證用戶存在且密碼正確
+            if (!$admin || !Hash::check($validated['password'], $admin->password)) {
+                // 記錄登入失敗
+                \Illuminate\Support\Facades\Log::warning('管理員登入失敗', [
+                    'username' => $validated['username'],
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]);
+
+                return response()->json([
+                    'message' => '用戶名或密碼錯誤'
+                ], 401);
+            }
+
+            // 檢查管理員是否被軟刪除
+            if ($admin->trashed()) {
+                \Illuminate\Support\Facades\Log::warning('已刪除的管理員嘗試登入', [
+                    'admin_id' => $admin->id,
+                    'username' => $admin->username,
+                    'ip' => $request->ip(),
+                ]);
+
+                return response()->json([
+                    'message' => '用戶名或密碼錯誤'
+                ], 401);
+            }
+
+            // 創建 API token
+            $tokenName = 'admin-token-' . $admin->username . '-' . now()->timestamp;
+            $token = $admin->createToken($tokenName, [], now()->addHours(24));
+
+            // 更新最後登入時間
+            $admin->updateLastLogin();
+
+            // 記錄成功登入
+            \Illuminate\Support\Facades\Log::info('管理員登入成功', [
+                'admin_id' => $admin->id,
+                'username' => $admin->username,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            return response()->json([
+                'data' => [
+                    'user' => [
+                        'id' => $admin->id,
+                        'username' => $admin->username,
+                        'name' => $admin->name,
+                        'email' => $admin->email,
+                        'role' => $admin->role,
+                        'permissions' => $admin->permissions,
+                        'last_login_at' => $admin->last_login_at,
+                        'created_at' => $admin->created_at,
+                        'updated_at' => $admin->updated_at,
+                    ],
+                    'token' => [
+                        'access_token' => $token->plainTextToken,
+                        'token_type' => 'Bearer',
+                        'expires_in' => 24 * 3600, // 24 小時（秒）
+                    ]
+                ],
+                'message' => '管理員登入成功'
+            ], 200);
+        } catch (\Exception $e) {
+            // 記錄系統錯誤
+            \Illuminate\Support\Facades\Log::error('管理員登入時發生系統錯誤', [
+                'error' => $e->getMessage(),
+                'username' => $validated['username'] ?? 'unknown',
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'message' => '登入失敗，請稍後再試'
+            ], 500);
+        }
     }
 }

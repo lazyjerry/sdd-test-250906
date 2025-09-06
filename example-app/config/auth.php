@@ -64,6 +64,11 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
+        'sys_users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\SysUser::class,
+        ],
+
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',
@@ -110,4 +115,17 @@ return [
     */
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email Verification Settings
+    |--------------------------------------------------------------------------
+    |
+    | This option controls whether email verification is required for new
+    | user registrations. When set to false, users can login immediately
+    | after registration without email verification.
+    |
+    */
+
+    'require_email_verification' => env('REQUIRE_EMAIL_VERIFICATION', true),
 ];
