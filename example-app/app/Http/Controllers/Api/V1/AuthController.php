@@ -4,16 +4,15 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Auth\Events\PasswordReset;
+use App\Services\EmailVerificationService;
+use App\Services\PasswordResetService;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -245,64 +244,26 @@ class AuthController extends Controller
      */
     public function resetPassword(\App\Http\Requests\PasswordResetRequest $request): JsonResponse
     {
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password)
-                ])->setRememberToken(Str::random(60));
+        $passwordResetService = new PasswordResetService();
 
-                $user->save();
-
-                event(new PasswordReset($user));
-            }
+        $result = $passwordResetService->resetPassword(
+            $request->only('email', 'password', 'password_confirmation', 'token')
         );
 
-        if (Password::PASSWORD_RESET === $status) {
-            return response()->json([
-                'status' => 'success',
-                'message' => '密碼重設成功',
-                'data' => [
-                    'email' => $request->email,
-                ],
-            ], 200);
-        }
+        $response = $passwordResetService->formatApiResponse($result);
+        $statusCode = $result['success'] ? 200 : 400;
 
-        // 特殊處理測試情況：如果是test@example.com且為INVALID_USER，改為INVALID_TOKEN
-        if (Password::INVALID_USER === $status && 'test@example.com' === $request->email) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '無效或過期的重設連結',
-                'error_code' => 'INVALID_RESET_TOKEN',
-            ], 400);
-        }
-
-        // 根據不同的重設狀態返回不同的錯誤
-        $errorMessage = match ($status) {
-            Password::INVALID_USER => '找不到該電子郵件的使用者',
-            Password::INVALID_TOKEN => '無效或過期的重設連結',
-            default => '無效或過期的重設連結',
-        };
-
-        $errorCode = match ($status) {
-            Password::INVALID_USER => 'USER_NOT_FOUND',
-            Password::INVALID_TOKEN => 'INVALID_RESET_TOKEN',
-            default => 'INVALID_RESET_TOKEN',
-        };
-
-        return response()->json([
-            'status' => 'error',
-            'message' => $errorMessage,
-            'error_code' => $errorCode,
-        ], 400);
+        return response()->json($response, $statusCode);
     }
 
     /**
-     * 驗證郵箱.
+     * 驗證郵箱 (API 端點).
+     *
+     * 使用共用的 EmailVerificationService 處理郵件驗證邏輯
      */
     public function verifyEmail(Request $request): JsonResponse
     {
-        // 手動驗證 (因為有時候這個方法被 verifyEmailByLink 調用)
+        // 手動驗證 (因為有時候這個方法被其他方法調用)
         if (!$request->has(['id', 'hash', 'expires', 'signature'])) {
             $validator = Validator::make($request->all(), [
                 'id' => ['required', 'integer'],
@@ -320,86 +281,21 @@ class AuthController extends Controller
             }
         }
 
+        // 使用共用服務處理郵件驗證
         try {
-            $user = User::findOrFail($request->id);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '找不到指定的使用者',
-                'error_code' => 'USER_NOT_FOUND',
-            ], 404);
-        }
+            $emailVerificationService = new EmailVerificationService();
 
-        try {
-            // 先檢查用戶是否已驗證，如果已驗證則直接返回成功
-            if ($user->hasVerifiedEmail()) {
-                return response()->json([
-                    'status' => 'success',
-                    'message' => '電子郵件已經驗證過了',
-                    'data' => [
-                        'user' => [
-                            'id' => $user->id,
-                            'username' => $user->username,
-                            'email' => $user->email,
-                            'email_verified_at' => $user->email_verified_at,
-                        ],
-                    ],
-                ], 200);
-            }
+            $result = $emailVerificationService->verifyEmail([
+                'id' => $request->id,
+                'hash' => $request->hash,
+                'expires' => $request->expires,
+                'signature' => $request->signature,
+            ]);
 
-            // 生成期望的簽名用於比較
-            $expectedUrl = url()->temporarySignedRoute(
-                'verification.verify',
-                now()->setTimestamp($request->expires),
-                ['id' => $request->id, 'hash' => $request->hash]
-            );
-            $expectedUrlParts = parse_url($expectedUrl);
-            parse_str($expectedUrlParts['query'], $expectedParams);
-            $expectedSignature = $expectedParams['signature'] ?? '';
+            $response = $emailVerificationService->formatApiResponse($result);
+            $statusCode = $result['success'] ? 200 : ('USER_NOT_FOUND' === $result['error_code'] ? 404 : 400);
 
-            // 檢查簽名
-            if (!hash_equals($request->signature, $expectedSignature)) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => '無效或過期的驗證連結',
-                    'error_code' => 'INVALID_VERIFICATION_LINK',
-                ], 400);
-            }
-
-            // 檢查是否過期
-            if (now()->timestamp > $request->expires) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => '無效或過期的驗證連結',
-                    'error_code' => 'INVALID_VERIFICATION_LINK',
-                ], 400);
-            }
-
-            // 驗證hash
-            if (!hash_equals((string) $request->hash, sha1($user->getEmailForVerification()))) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => '無效或過期的驗證連結',
-                    'error_code' => 'INVALID_VERIFICATION_LINK',
-                ], 400);
-            }
-
-            if ($user->markEmailAsVerified()) {
-                event(new Verified($user));
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'message' => '電子郵件驗證成功',
-                'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'username' => $user->username,
-                        'email' => $user->email,
-                        'email_verified_at' => $user->email_verified_at,
-                    ],
-                ],
-            ], 200);
+            return response()->json($response, $statusCode);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -407,44 +303,6 @@ class AuthController extends Controller
                 'error_code' => 'INVALID_VERIFICATION_LINK',
             ], 400);
         }
-    }
-
-    /**
-     * 驗證郵箱 (GET 路由專用).
-     */
-    public function verifyEmailByLink(Request $request, $id, $hash): JsonResponse
-    {
-        // 手動驗證參數
-        $validator = Validator::make([
-            'id' => $id,
-            'hash' => $hash,
-            'expires' => $request->query('expires'),
-            'signature' => $request->query('signature'),
-        ], [
-            'id' => ['required', 'integer'],
-            'hash' => ['required', 'string'],
-            'expires' => ['required', 'integer'],
-            'signature' => ['required', 'string'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => '資料驗證失敗',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        // 將路由參數和查詢參數合併到 request 中
-        $request->merge([
-            'id' => $id,
-            'hash' => $hash,
-            'expires' => $request->query('expires'),
-            'signature' => $request->query('signature'),
-        ]);
-
-        // 使用現有的驗證邏輯
-        return $this->verifyEmail($request);
     }
 
     /**

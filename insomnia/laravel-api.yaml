@@ -23,7 +23,7 @@ collection:
       text: |
         {
           "name": "一般使用者",
-          "username": "normaluser",
+          "username": "testuser",
           "email": "user@example.com",
           "phone": "0900123456",
           "password": "UserPassword123!",
@@ -57,7 +57,7 @@ collection:
       mimeType: application/json
       text: |
         {
-          "username": "normaluser",
+          "username": "testuser",
           "password": "UserPassword123!",
           "device_name": "User Client"
         }
@@ -75,14 +75,14 @@ collection:
         store: true
       rebuildPath: true
 
-  - url: "{{ _.base_url }}/auth/login"
-    name: 🔑 管理員登入
+  - url: "{{ _.base_url }}/auth/admin-login"
+    name: 🔑 管理員專用登入
     meta:
       id: req_admin_login
       created: 1725616798000
       modified: 1725616798000
       isPrivate: false
-      description: "管理員登入（可使用 username，無需 email）"
+      description: "管理員專用登入端點（支援 username 或 email）"
       sortKey: -1725616798000
     method: POST
     body:
@@ -150,7 +150,7 @@ collection:
       mimeType: application/json
       text: |
         {
-          "email": "user@example.com"
+          "email": "test@example.com"
         }
     headers:
       - name: Content-Type
@@ -181,7 +181,7 @@ collection:
       text: |
         {
           "token": "reset_token_here",
-          "email": "user@example.com",
+          "email": "test@example.com",
           "password": "NewPassword123!",
           "password_confirmation": "NewPassword123!"
         }
@@ -327,6 +327,43 @@ collection:
       rebuildPath: true
 
   # ===== 👨‍💼 管理員功能 - 使用者建立 =====
+  - url: "{{ _.base_url }}/admin/users"
+    name: ➕ 管理員創建用戶（統一 API）
+    meta:
+      id: req_admin_create_user
+      created: 1725616601000
+      modified: 1725616601000
+      isPrivate: false
+      description: "管理員使用統一 API 創建任何角色的用戶"
+      sortKey: -1725616601000
+    method: POST
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "name": "新創建的用戶",
+          "username": "newuser123",
+          "email": "newuser@example.com",
+          "phone": "0900999888",
+          "password": "NewUserPass123!",
+          "role": "user"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Accept
+        value: application/json
+      - name: Authorization
+        value: "Bearer {{ _.admin_token }}"
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+
   - url: "{{ _.base_url }}/admin/register"
     name: ➕ 管理員建立使用者（User 角色）
     meta:
@@ -428,14 +465,14 @@ collection:
         store: true
       rebuildPath: true
 
-  - url: "{{ _.base_url }}/admin/users/1"
+  - url: "{{ _.base_url }}/admin/users/2"
     name: 👁️ 管理員查看指定使用者
     meta:
       id: req_admin_get_user
       created: 1725616589000
       modified: 1725616589000
       isPrivate: false
-      description: "管理員查看指定使用者詳情"
+      description: "管理員查看指定使用者詳情（示例：查看 Test User）"
       sortKey: -1725616589000
     method: GET
     body: {}
@@ -453,14 +490,14 @@ collection:
         store: true
       rebuildPath: true
 
-  - url: "{{ _.base_url }}/admin/users/1"
+  - url: "{{ _.base_url }}/admin/users/2"
     name: ✏️ 管理員更新使用者
     meta:
       id: req_admin_update_user
       created: 1725616588000
       modified: 1725616588000
       isPrivate: false
-      description: "管理員更新使用者資料和角色"
+      description: "管理員更新使用者資料和角色（示例：更新 Test User）"
       sortKey: -1725616588000
     method: PUT
     body:
@@ -488,7 +525,7 @@ collection:
         store: true
       rebuildPath: true
 
-  - url: "{{ _.base_url }}/admin/users/1"
+  - url: "{{ _.base_url }}/admin/users/3"
     name: 🗑️ 管理員刪除使用者
     meta:
       id: req_admin_delete_user
@@ -513,7 +550,7 @@ collection:
         store: true
       rebuildPath: true
 
-  - url: "{{ _.base_url }}/admin/users/1/activate"
+  - url: "{{ _.base_url }}/admin/users/3/activate"
     name: ✅ 管理員啟用使用者
     meta:
       id: req_admin_activate_user
@@ -542,7 +579,7 @@ collection:
         store: true
       rebuildPath: true
 
-  - url: "{{ _.base_url }}/admin/users/1/deactivate"
+  - url: "{{ _.base_url }}/admin/users/3/deactivate"
     name: ❌ 管理員停用使用者
     meta:
       id: req_admin_deactivate_user
@@ -571,7 +608,7 @@ collection:
         store: true
       rebuildPath: true
 
-  - url: "{{ _.base_url }}/admin/users/1/reset-password"
+  - url: "{{ _.base_url }}/admin/users/2/reset-password"
     name: 🔄 管理員重設使用者密碼
     meta:
       id: req_admin_reset_password
