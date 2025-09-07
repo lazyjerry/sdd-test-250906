@@ -33,8 +33,20 @@
             "description": "用戶個人資料管理 API"
         },
         {
-            "name": "Admin",
-            "description": "管理員功能 API"
+            "name": "Admin - User Management",
+            "description": "管理員用戶管理 API"
+        },
+        {
+            "name": "Admin - Bulk Operations",
+            "description": "管理員批量操作 API"
+        },
+        {
+            "name": "Admin - Statistics",
+            "description": "管理員統計資訊 API"
+        },
+        {
+            "name": "Admin - System",
+            "description": "管理員系統管理 API"
         }
     ],
     "components": {
@@ -867,7 +879,7 @@
         },
         "/api/v1/admin/users": {
             "get": {
-                "tags": ["Admin"],
+                "tags": ["Admin - User Management"],
                 "summary": "獲取用戶列表",
                 "description": "獲取所有用戶列表（需要管理員權限）",
                 "security": [{ "bearerAuth": [] }],
@@ -1004,11 +1016,88 @@
                     "401": { "$ref": "#/components/responses/Unauthorized" },
                     "403": { "$ref": "#/components/responses/Forbidden" }
                 }
+            },
+            "post": {
+                "tags": ["Admin - User Management"],
+                "summary": "創建新用戶",
+                "description": "管理員創建新用戶（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "username",
+                                    "email",
+                                    "password",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "username": {
+                                        "type": "string",
+                                        "example": "john_doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+886912345678"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "Password123!"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": ["user", "admin"],
+                                        "example": "user"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "用戶創建成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/User"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" },
+                    "422": { "$ref": "#/components/responses/ValidationError" }
+                }
             }
         },
         "/api/v1/admin/users/{id}": {
             "get": {
-                "tags": ["Admin"],
+                "tags": ["Admin - User Management"],
                 "summary": "獲取用戶詳情",
                 "description": "獲取指定用戶的詳細資料（需要管理員權限）",
                 "security": [{ "bearerAuth": [] }],
@@ -1108,7 +1197,7 @@
                 }
             },
             "put": {
-                "tags": ["Admin"],
+                "tags": ["Admin - User Management"],
                 "summary": "更新用戶資料",
                 "description": "更新指定用戶的資料（需要管理員權限）",
                 "security": [{ "bearerAuth": [] }],
@@ -1233,7 +1322,7 @@
         },
         "/api/v1/admin/users/{id}/reset-password": {
             "post": {
-                "tags": ["Admin"],
+                "tags": ["Admin - User Management"],
                 "summary": "重設用戶密碼",
                 "description": "管理員重設指定用戶的密碼（需要管理員權限）",
                 "security": [{ "bearerAuth": [] }],
@@ -1401,6 +1490,516 @@
                         }
                     },
                     "422": { "$ref": "#/components/responses/ValidationError" }
+                }
+            }
+        },
+        "/api/v1/admin/users/{id}/deactivate": {
+            "post": {
+                "tags": ["Admin - User Management"],
+                "summary": "停用用戶",
+                "description": "管理員停用指定用戶（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": { "type": "integer" },
+                        "description": "用戶 ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "用戶停用成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" },
+                    "404": { "$ref": "#/components/responses/NotFound" }
+                }
+            }
+        },
+        "/api/v1/admin/users/{id}/activate": {
+            "post": {
+                "tags": ["Admin - User Management"],
+                "summary": "啟用用戶",
+                "description": "管理員啟用指定用戶（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": { "type": "integer" },
+                        "description": "用戶 ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "用戶啟用成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" },
+                    "404": { "$ref": "#/components/responses/NotFound" }
+                }
+            }
+        },
+        "/api/v1/admin/users/bulk-deactivate": {
+            "post": {
+                "tags": ["Admin - Bulk Operations"],
+                "summary": "批量停用用戶",
+                "description": "管理員批量停用多個用戶（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["user_ids"],
+                                "properties": {
+                                    "user_ids": {
+                                        "type": "array",
+                                        "items": { "type": "integer" },
+                                        "example": [1, 2, 3]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "批量停用成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "successful": {
+                                                            "type": "integer"
+                                                        },
+                                                        "failed": {
+                                                            "type": "integer"
+                                                        },
+                                                        "errors": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" },
+                    "422": { "$ref": "#/components/responses/ValidationError" }
+                }
+            }
+        },
+        "/api/v1/admin/users/bulk-activate": {
+            "post": {
+                "tags": ["Admin - Bulk Operations"],
+                "summary": "批量啟用用戶",
+                "description": "管理員批量啟用多個用戶（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["user_ids"],
+                                "properties": {
+                                    "user_ids": {
+                                        "type": "array",
+                                        "items": { "type": "integer" },
+                                        "example": [1, 2, 3]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "批量啟用成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "successful": {
+                                                            "type": "integer"
+                                                        },
+                                                        "failed": {
+                                                            "type": "integer"
+                                                        },
+                                                        "errors": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" },
+                    "422": { "$ref": "#/components/responses/ValidationError" }
+                }
+            }
+        },
+        "/api/v1/admin/users/bulk-delete": {
+            "post": {
+                "tags": ["Admin - Bulk Operations"],
+                "summary": "批量刪除用戶",
+                "description": "管理員批量刪除多個用戶（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["user_ids"],
+                                "properties": {
+                                    "user_ids": {
+                                        "type": "array",
+                                        "items": { "type": "integer" },
+                                        "example": [1, 2, 3]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "批量刪除成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "successful": {
+                                                            "type": "integer"
+                                                        },
+                                                        "failed": {
+                                                            "type": "integer"
+                                                        },
+                                                        "errors": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" },
+                    "422": { "$ref": "#/components/responses/ValidationError" }
+                }
+            }
+        },
+        "/api/v1/admin/statistics/users": {
+            "get": {
+                "tags": ["Admin - Statistics"],
+                "summary": "獲取用戶統計資訊",
+                "description": "管理員獲取用戶相關統計資訊（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "responses": {
+                    "200": {
+                        "description": "統計資訊獲取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "total_users": {
+                                                            "type": "integer"
+                                                        },
+                                                        "active_users": {
+                                                            "type": "integer"
+                                                        },
+                                                        "inactive_users": {
+                                                            "type": "integer"
+                                                        },
+                                                        "new_users_today": {
+                                                            "type": "integer"
+                                                        },
+                                                        "new_users_this_week": {
+                                                            "type": "integer"
+                                                        },
+                                                        "new_users_this_month": {
+                                                            "type": "integer"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" }
+                }
+            }
+        },
+        "/api/v1/admin/statistics/system": {
+            "get": {
+                "tags": ["Admin - Statistics"],
+                "summary": "獲取系統統計資訊",
+                "description": "管理員獲取系統相關統計資訊（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "responses": {
+                    "200": {
+                        "description": "系統統計資訊獲取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "database_size": {
+                                                            "type": "string"
+                                                        },
+                                                        "total_api_calls": {
+                                                            "type": "integer"
+                                                        },
+                                                        "average_response_time": {
+                                                            "type": "number"
+                                                        },
+                                                        "error_rate": {
+                                                            "type": "number"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" }
+                }
+            }
+        },
+        "/api/v1/admin/system/health": {
+            "get": {
+                "tags": ["Admin - System"],
+                "summary": "系統健康檢查",
+                "description": "管理員獲取系統健康狀態（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "responses": {
+                    "200": {
+                        "description": "系統健康狀態",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "status": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "healthy",
+                                                                "warning",
+                                                                "critical"
+                                                            ]
+                                                        },
+                                                        "database": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "connected",
+                                                                "disconnected"
+                                                            ]
+                                                        },
+                                                        "cache": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "working",
+                                                                "error"
+                                                            ]
+                                                        },
+                                                        "disk_space": {
+                                                            "type": "string"
+                                                        },
+                                                        "memory_usage": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" }
+                }
+            }
+        },
+        "/api/v1/admin/audit-log": {
+            "get": {
+                "tags": ["Admin - System"],
+                "summary": "獲取審計日誌",
+                "description": "管理員獲取系統審計日誌（需要管理員權限）",
+                "security": [{ "bearerAuth": [] }],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": { "type": "integer", "default": 1 },
+                        "description": "頁碼"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": { "type": "integer", "default": 15 },
+                        "description": "每頁數量"
+                    },
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "schema": { "type": "string" },
+                        "description": "篩選操作類型"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "審計日誌獲取成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SuccessResponse"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "logs": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "user_id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "action": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "details": {
+                                                                        "type": "object"
+                                                                    },
+                                                                    "ip_address": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time"
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        "pagination": {
+                                                            "$ref": "#/components/schemas/PaginationInfo"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": { "$ref": "#/components/responses/Unauthorized" },
+                    "403": { "$ref": "#/components/responses/Forbidden" }
                 }
             }
         }
