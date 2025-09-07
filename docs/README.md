@@ -4,7 +4,32 @@
 
 ## 📁 目錄結構
 
-### `archive/`
+### 📋 **核心文件**
+
+- [`api-usage.md`](api-usage.md) - API 使用指南
+- [`features.md`](features.md) - 功能特色說明
+- [`installation.md`](installation.md) - 安裝與啟動指南
+- [`laravel-sanctum-guide.md`](laravel-sanctum-guide.md) - Laravel Sanctum 套件指南
+- [`login-role-isolation.md`](login-role-isolation.md) - 登入角色隔離機制
+- [`role-based-registration.md`](role-based-registration.md) - 角色基礎註冊系統
+- [`system-architecture.md`](system-architecture.md) - 系統架構文件
+- [`testing.md`](testing.md) - 測試指南
+- [`troubleshooting.md`](troubleshooting.md) - 錯誤排除指南
+
+### 📝 **變更記錄** (`changes/`)
+
+存放所有專案變更日誌和重構記錄。
+
+**內容**:
+
+- 重構變更記錄
+- 新功能實作記錄
+- 修復和改進記錄
+- 資料庫變更記錄
+
+**查看方式**: 參考 [`changes/README.md`](changes/README.md) 了解詳細內容。
+
+### 🗄️ **歷史歸檔** (`archive/`)
 
 存放歷史文件和已棄用的實作方案。
 
@@ -16,32 +41,51 @@
 
 **查看方式**: 參考 [`archive/README.md`](archive/README.md) 了解詳細內容。
 
-## 📚 主要文件
+## 📚 快速導航
 
-目前專案的主要文件位於：
+### 🚀 **新手指南**
 
-- **主要說明**: [`../README.md`](../README.md) - 專案主要文件
-- **測試指南**: [`../test_scripts/`](../test_scripts/) - 測試腳本和指南
-- **API 文件**: `../example-app/public/swagger-ui/` - Swagger API 文件
+1. [**系統架構**](system-architecture.md) - 了解整體架構
+2. [**安裝指南**](installation.md) - 快速開始使用
+3. [**API 使用**](api-usage.md) - API 端點和範例
+4. [**測試指南**](testing.md) - 如何執行測試
+
+### 🔧 **開發相關**
+
+- [**Laravel Sanctum 指南**](laravel-sanctum-guide.md) - 認證系統詳解
+- [**功能特色**](features.md) - 主要功能說明
+- [**角色註冊系統**](role-based-registration.md) - 角色管理機制
+- [**登入角色隔離**](login-role-isolation.md) - 安全機制
+
+### 🔍 **問題排除**
+
+- [**錯誤排除指南**](troubleshooting.md) - 常見問題解決
+- [**變更記錄**](changes/) - 了解系統變更歷史
 
 ## 🗂️ 文件分類
 
-### 實作相關
+### 系統文件
 
-- 主要實作說明在 `README.md`
-- 程式碼註解在各個源碼檔案中
-- API 文件在 Swagger UI 中
+- **架構設計**: [`system-architecture.md`](system-architecture.md)
+- **安全機制**: [`login-role-isolation.md`](login-role-isolation.md)
+- **認證系統**: [`laravel-sanctum-guide.md`](laravel-sanctum-guide.md)
 
-### 測試相關
+### 使用文件
 
-- 自動化測試: `../example-app/tests/`
-- 手動測試: `../test_scripts/`
-- 測試指南: `../test_scripts/README.md`
+- **安裝部署**: [`installation.md`](installation.md)
+- **API 使用**: [`api-usage.md`](api-usage.md)
+- **功能說明**: [`features.md`](features.md)
+
+### 開發文件
+
+- **測試指南**: [`testing.md`](testing.md)
+- **變更記錄**: [`changes/`](changes/)
+- **問題排除**: [`troubleshooting.md`](troubleshooting.md)
 
 ### 歷史記錄
 
-- 棄用的實作: `archive/`
-- 開發過程記錄: Git 提交歷史
+- **變更日誌**: [`changes/`](changes/) - 專案變更歷史
+- **歸檔文件**: [`archive/`](archive/) - 歷史文件歸檔
 
 ## 📝 文件編寫規範
 

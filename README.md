@@ -367,15 +367,21 @@ chmod -R 755 storage bootstrap/cache
 
 ## 文件索引
 
-### 重構說明文件
+### 核心文件
 
-- [郵箱驗證功能重構](docs/email-verification-refactor.md) - API 與 Web 分離重構詳細說明
-- [密碼重設功能重構](docs/password-reset-refactor.md) - 密碼重設架構改進文件
+- [Laravel Sanctum 完整指南](docs/laravel-sanctum-guide.md) - Sanctum 驗證套件詳細說明
+- [角色基礎註冊系統](docs/role-based-registration.md) - 角色註冊機制說明
+
+### 變更記錄
+
+- [變更記錄索引](docs/changes/README.md) - 所有專案變更與重構文件
+- [郵箱驗證功能重構](docs/changes/email-verification-refactor.md) - API 與 Web 分離重構
+- [密碼重設功能重構](docs/changes/password-reset-architecture-refactor.md) - 密碼重設架構改進
+- [數據庫索引優化](docs/changes/database-indexes-summary.md) - 數據庫效能優化記錄
 
 ### 系統架構
 
 - [系統架構文件](docs/system-architecture.md) - 技術堆疊與專案結構
-- [角色基礎註冊系統](docs/role-based-registration.md) - 角色註冊機制說明
 
 ### 安裝與使用
 
