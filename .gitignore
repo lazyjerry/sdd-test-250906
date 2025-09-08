@@ -1,0 +1,50 @@
+# macOS 系統檔案
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE 和編輯器檔案
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 暫存和快取檔案
+*.tmp
+*.temp
+*.log
+*.cache
+
+# 環境變數檔案
+.env.local
+.env.*.local
+
+# Node.js 相關 (如果有前端資源)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python 相關 (如果有 Python 腳本)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 備份檔案
+*.bak
+*.backup
+*.orig
+
+# 壓縮檔案
+*.zip
+*.tar.gz
+*.rar
+
+# 專案特定的忽略項目
+# 可以在這裡添加專案特定的檔案或目錄
