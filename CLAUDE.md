@@ -89,6 +89,7 @@ example-app/
 ### API 端點分類
 
 #### 認證相關 (Authentication)
+
 - `POST /api/v1/auth/register` - 用戶註冊
 - `POST /api/v1/auth/login` - 用戶登入
 - `POST /api/v1/auth/admin-login` - 管理員登入
@@ -98,12 +99,15 @@ example-app/
 - `POST /api/v1/auth/verify-email` - 驗證郵箱
 
 #### 用戶管理 (User Profile)
+
 - `GET /api/v1/users/profile` - 獲取個人資料
 - `PUT /api/v1/users/profile` - 更新個人資料
 - `PUT /api/v1/users/change-password` - 修改密碼
 
 #### 管理員功能 (Admin)
+
 **基本用戶管理:**
+
 - `GET /api/v1/admin/users` - 獲取用戶列表
 - `POST /api/v1/admin/users` - 創建新用戶
 - `GET /api/v1/admin/users/{id}` - 獲取用戶詳情
@@ -114,6 +118,7 @@ example-app/
 - `POST /api/v1/admin/users/{id}/activate` - 啟用用戶
 
 **批量操作:**
+
 - `POST /api/v1/admin/users/bulk-deactivate` - 批量停用用戶
 - `POST /api/v1/admin/users/bulk-activate` - 批量啟用用戶
 - `POST /api/v1/admin/users/bulk-update` - 批量更新用戶
@@ -121,11 +126,13 @@ example-app/
 - `POST /api/v1/admin/users/bulk-delete` - 批量刪除用戶
 
 **統計功能:**
+
 - `GET /api/v1/admin/statistics/users` - 用戶統計資訊
 - `GET /api/v1/admin/statistics/system` - 系統統計資訊
 - `GET /api/v1/admin/statistics/activity` - 活動統計資訊
 
 **系統管理:**
+
 - `GET /api/v1/admin/system/health` - 系統健康檢查
 - `GET /api/v1/admin/audit-log` - 審計日誌
 - `GET /api/v1/admin/activity-log` - 活動日誌
@@ -149,20 +156,24 @@ example-app/
 ## Documentation Structure
 
 ### 核心文檔
+
 - `docs/laravel-sanctum-guide.md` - Laravel Sanctum 套件完整指南
 - `docs/role-based-registration.md` - 角色基礎註冊系統
 
 ### 變更記錄
+
 - `docs/changes/` - 專案變更日誌目錄
 - `.github/instructions/changelog.instructions.md` - 變更日誌撰寫規範
 
 ### API 文檔
+
 - `public/swagger-ui/` - Swagger UI 介面
 - `public/swagger-ui/api-docs.json` - OpenAPI 3.0 規格文檔
 
 ## Development Features
 
 ### 完成的功能模組
+
 - ✅ 用戶註冊與認證系統
 - ✅ JWT Token 認證 (Sanctum)
 - ✅ 郵箱驗證 (API + Web 介面)
@@ -175,6 +186,7 @@ example-app/
 - ✅ 系統健康檢查
 
 ### 測試覆蓋
+
 - 170+ 個 PHPUnit 測試
 - Feature Tests: 認證、用戶管理、管理員功能
 - Unit Tests: 模型、服務、工具類別

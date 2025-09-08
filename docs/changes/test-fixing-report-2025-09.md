@@ -1,4 +1,4 @@
-# Laravel 12 API 測試修復報告 - 2025年9月
+# Laravel 12 API 測試修復報告 - 2025 年 9 月
 
 ## 📊 修復成果總結
 
@@ -160,10 +160,10 @@ private function extractVerificationParams($url)
 
 ---
 
-**報告完成時間**: 2025年9月  
+**報告完成時間**: 2025 年 9 月  
 **測試框架**: PHPUnit 11.5.36  
 **Laravel 版本**: Laravel 12  
-**PHP 版本**: PHP 8.2.28  
+**PHP 版本**: PHP 8.2.28
 
 這次修復建立了堅實的測試基礎，為後續的開發工作提供了可靠的品質保證。
 
