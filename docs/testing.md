@@ -4,10 +4,22 @@
 
 ## 測試類型
 
-- **自動化測試**: 使用 PHPUnit 的完整測試套件 (170 個測試)
+- **自動化測試**: 使用 PHPUnit 的完整測試套件 (146 個測試，74% 通過率)
 - **手動測試**: 互動式測試腳本 (`test_scripts/`)
 - **整合測試**: 端到端功能驗證
 - **效能測試**: API 回應時間和併發測試
+
+## 測試現狀
+
+### 🎯 當前測試通過率: 74.0% (108/146 測試)
+
+#### ✅ 完全穩定的測試組
+- **Auth 測試組**: 36/36 (100%) - 認證功能完全穩定
+- **User 測試組**: 19/19 (100%) - 用戶管理功能完全穩定  
+- **Admin 測試組**: 42/42 (100%) - 管理員功能完全穩定
+
+#### 🔧 需要改進的測試組
+- **Integration 測試**: 部分測試需要調整 API 格式和路由
 
 ## 自動化測試指令
 
@@ -270,7 +282,57 @@ cat test_scripts/auth/EMAIL_VERIFICATION_TESTING_GUIDE.md
 
 ### 常見測試問題與解決方案
 
-#### 1. Sanctum 認證問題
+#### 1. 電子郵件驗證測試問題
+
+**問題**: User 模型缺少 `MustVerifyEmail` trait
+
+```php
+// ❌ 問題: 模型缺少必要的 trait 和 interface
+class User extends Authenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable;
+}
+
+// ✅ 解決: 完整實現 Laravel 電子郵件驗證
+class User extends Authenticatable implements MustVerifyEmail
+{
+    use HasApiTokens, HasFactory, Notifiable, MustVerifyEmail;
+}
+```
+
+#### 2. 通知系統測試問題
+
+**問題**: 使用錯誤的 fake 方法測試通知
+
+```php
+// ❌ 錯誤: 測試通知系統卻使用 Mail::fake()
+Mail::fake();
+
+// ✅ 正確: 使用 Notification::fake() 測試通知
+Notification::fake();
+```
+
+#### 3. Laravel 簽名 URL 參數解析
+
+**問題**: 無法正確解析 Laravel 簽名 URL 參數
+
+```php
+// ✅ 解決方案: 創建專用的參數解析方法
+private function extractVerificationParams($url)
+{
+    $parsedUrl = parse_url($url);
+    parse_str($parsedUrl['query'] ?? '', $queryParams);
+
+    return [
+        'id' => $queryParams['id'] ?? null,
+        'hash' => $queryParams['hash'] ?? null,
+        'expires' => $queryParams['expires'] ?? null,
+        'signature' => $queryParams['signature'] ?? null,
+    ];
+}
+```
+
+#### 4. Sanctum 認證問題
 
 ```bash
 # 問題: 測試中 Sanctum token 無法正確認證

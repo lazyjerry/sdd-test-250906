@@ -378,6 +378,7 @@ chmod -R 755 storage bootstrap/cache
 - [郵箱驗證功能重構](docs/changes/email-verification-refactor.md) - API 與 Web 分離重構
 - [密碼重設功能重構](docs/changes/password-reset-architecture-refactor.md) - 密碼重設架構改進
 - [數據庫索引優化](docs/changes/database-indexes-summary.md) - 數據庫效能優化記錄
+- [測試修復報告](docs/changes/test-fixing-report-2025-09.md) - Laravel 12 測試修復詳細報告
 
 ### 系統架構
 
@@ -390,7 +391,7 @@ chmod -R 755 storage bootstrap/cache
 
 ### 測試與品質
 
-- [測試指南](docs/testing.md) - 自動化與手動測試
+- [測試指南](docs/testing.md) - 自動化與手動測試，74% 通過率
 - [錯誤排除指南](docs/troubleshooting.md) - 常見問題解決方案
 
 ### API 資源
